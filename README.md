@@ -104,6 +104,18 @@ WP Admin → Settings → Permalinks → Save Changes
 
 ---
 
+## Vista previa
+
+### Paso 1 — Pagina inicio
+!(screenshots/inicio.png)
+
+### Pagina donar
+!(screenshots/paso2.png)
+
+### Admin — Formulario en Formidable
+![Formidable](screenshots/formidable-admin.png)
+
+
 ## Pendientes
 
 - [ ] Conectar Mercado Pago Checkout Bricks con monto dinámico real
