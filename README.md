@@ -71,44 +71,7 @@ wp-content/themes/[tema-activo]/donacion/donacion.js
 ```
 
 **2. Agregar al `functions.php` del tema:**
-```php
-function donacion_scripts() {
-    if ( is_page('donar') ) {
-        wp_enqueue_script('react',     'https://unpkg.com/react@18.3.1/umd/react.development.js',     [], null, true);
-        wp_enqueue_script('react-dom', 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js', ['react'], null, true);
-        wp_enqueue_script('babel',     'https://unpkg.com/@babel/standalone@7.29.0/babel.min.js',     [], null, true);
-        wp_enqueue_script('donacion',  get_template_directory_uri() . '/donacion/donacion.js', ['react','react-dom','babel'], null, true);
-    }
-}
-add_action('wp_enqueue_scripts', 'donacion_scripts');
 
-function donacion_shortcode() { return '<div id="root"></div>'; }
-add_shortcode('formulario_donacion', 'donacion_shortcode');
-
-// Endpoint REST para guardar en Formidable Forms
-add_action('rest_api_init', function() {
-    register_rest_route('donacion/v1', '/guardar', array(
-        'methods'  => 'POST',
-        'callback' => 'donacion_guardar_entrada',
-        'permission_callback' => '__return_true',
-    ));
-});
-
-function donacion_guardar_entrada($request) {
-    $params = $request->get_json_params();
-    $entry_id = FrmEntry::create(array(
-        'form_id' => 2, // ID del formulario en Formidable
-        'item_meta' => array(
-            7  => sanitize_text_field($params['nombre'] ?? ''),
-            8  => sanitize_text_field($params['apellido'] ?? ''),
-            9  => sanitize_email($params['email'] ?? ''),
-            10 => sanitize_text_field($params['dni'] ?? ''),
-            11 => sanitize_text_field($params['telefono'] ?? ''),
-        )
-    ));
-    return new WP_REST_Response(array('success' => (bool)$entry_id), $entry_id ? 200 : 500);
-}
-```
 
 **3. Flush de permalinks:**
 ```
