@@ -107,10 +107,10 @@ WP Admin → Settings → Permalinks → Save Changes
 ## Vista previa
 
 ### Paso 1 — Pagina inicio
-!(screenshots/inicio.png)
+![inicio](screenshots/inicio.png)
 
 ### Pagina donar
-!(screenshots/paso2.png)
+![donar](screenshots/donar.png)
 
 ### Admin — Formulario en Formidable
 ![Formidable](screenshots/formidable-admin.png)
