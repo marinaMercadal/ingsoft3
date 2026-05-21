@@ -8,12 +8,11 @@ Rediseño del flujo de donación única para [modulosanitario.org](https://modul
 
 | Capa | Tecnología |
 |------|-----------|
-| CMS | WordPress |
+| Pagina web | WordPress |
 | Formularios | Formidable Forms Business |
-| E-commerce | WooCommerce + Mercado Pago |
+| Donaciones unicas | WooCommerce + Mercado Pago |
 | Integración forms↔productos | YayCommerce / FormWoo |
-| CRM / Donaciones mensuales | Salesforce + Debi (Prisma) |
-| Page builder | Elementor |
+| Donaciones mensuales | Salesforce + Debi (Prisma) |
 
 ---
 
