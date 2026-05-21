@@ -53,12 +53,17 @@ Las donaciones mensuales via Debi/Salesforce se mantienen sin cambios.
 
 ```
 donacion.js         # Formulario React completo (CSS + lógica + 3 pasos)
+                    # → wp-content/themes/[tema-activo]/donacion/donacion.js
+
 functions.php       # Fragmento para agregar al functions.php del tema WordPress
+                    # → wp-content/themes/[tema-activo]/functions.php (al final del archivo)
+
 inicio.html         # Mock de página de inicio
-paso1.html          # Mock estático paso 1 (presentación)
-paso2.html          # Mock estático paso 2 (presentación)
-paso3.html          # Mock estático paso 3 (presentación)
+                    # → crear una página en WordPress, pegar el contenido como bloque HTML
+
 README.md
+
+En mi caso el [tema-activo] es twentytwentyfive
 ```
 
 ---
