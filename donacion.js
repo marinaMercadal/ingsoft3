@@ -1,10 +1,9 @@
 /* =============================================================
    MÓDULO SANITARIO — Formulario de Donación
    Archivo único: React 18 + CSS inlineado + Babel standalone
-   Subir a: wp-content/themes/twentytwentyfive/donacion/donacion.js
+   Subir a: wp-content/themes/[tema-activo]/donacion/donacion.js
    ============================================================= */
 
-/* ── Inyectar fuente y CSS ── */
 (function () {
   const font = document.createElement("link");
   font.rel = "stylesheet";
@@ -185,7 +184,6 @@ h1 em { font-style: normal; background: linear-gradient(180deg, transparent 60%,
   document.head.appendChild(style);
 })();
 
-/* ── React app (transpilado por Babel en runtime) ── */
 const _app = document.createElement("script");
 _app.type = "text/babel";
 _app.setAttribute("data-presets", "react");
@@ -194,19 +192,18 @@ const { useState, useEffect } = React;
 
 const FOTO_URL = "https://modulosanitario.org/wp-content/uploads/2025/08/banos-portadad-_0003_IMG-20250209-WA0023-1-768x768.jpg";
 
-/* ── Icons ── */
 const Ic = {
-  Lock: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>,
+  Lock:   (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>,
   Shield: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/><path d="m9 12 2 2 4-4"/></svg>,
-  Check: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m5 12 5 5L20 7"/></svg>,
-  Arrow: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 12h14"/><path d="m13 5 7 7-7 7"/></svg>,
-  Back:  (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M19 12H5"/><path d="m11 19-7-7 7-7"/></svg>,
-  Heart: (p) => <svg viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M12 21s-7.5-4.7-9.5-9.3C1 7.8 3.6 4 7.4 4c2 0 3.5 1.1 4.6 2.7C13.1 5.1 14.6 4 16.6 4 20.4 4 23 7.8 21.5 11.7 19.5 16.3 12 21 12 21z"/></svg>,
-  Spark: (p) => <svg viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M12 2 13.8 9 21 11l-7.2 2L12 20l-1.8-7L3 11l7.2-2L12 2z"/></svg>,
-  MP:    (p) => <svg viewBox="0 0 48 48" fill="none" {...p}><rect x="4" y="12" width="40" height="24" rx="6" fill="#00B1EA"/><path d="M14 24c4-6 12-6 16 0" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/><circle cx="22" cy="24" r="2.5" fill="#fff"/></svg>,
-  CardL: (p) => <svg viewBox="0 0 48 48" fill="none" {...p}><rect x="4" y="10" width="40" height="28" rx="5" fill="#0B6FB8"/><rect x="4" y="16" width="40" height="5" fill="#08527d"/><rect x="9" y="27" width="10" height="3" rx="1" fill="#fff" opacity=".9"/><circle cx="36" cy="31" r="3.5" fill="#F26B5C"/><circle cx="40" cy="31" r="3.5" fill="#FFC857" opacity=".8"/></svg>,
-  CardI: (p) => <svg viewBox="0 0 48 48" fill="none" {...p}><circle cx="24" cy="24" r="18" fill="#1F3A5F"/><ellipse cx="24" cy="24" rx="8" ry="18" stroke="#fff" strokeWidth="1.5" fill="none"/><path d="M6 24h36M9 16h30M9 32h30" stroke="#fff" strokeWidth="1.5"/></svg>,
-  Bank:  (p) => <svg viewBox="0 0 48 48" fill="none" {...p}><path d="M24 6 6 16h36L24 6z" fill="#0B6FB8"/><rect x="9" y="18" width="4" height="16" fill="#0B6FB8"/><rect x="17" y="18" width="4" height="16" fill="#0B6FB8"/><rect x="27" y="18" width="4" height="16" fill="#0B6FB8"/><rect x="35" y="18" width="4" height="16" fill="#0B6FB8"/><rect x="6" y="36" width="36" height="4" rx="1" fill="#0B6FB8"/></svg>,
+  Check:  (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m5 12 5 5L20 7"/></svg>,
+  Arrow:  (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 12h14"/><path d="m13 5 7 7-7 7"/></svg>,
+  Back:   (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M19 12H5"/><path d="m11 19-7-7 7-7"/></svg>,
+  Heart:  (p) => <svg viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M12 21s-7.5-4.7-9.5-9.3C1 7.8 3.6 4 7.4 4c2 0 3.5 1.1 4.6 2.7C13.1 5.1 14.6 4 16.6 4 20.4 4 23 7.8 21.5 11.7 19.5 16.3 12 21 12 21z"/></svg>,
+  Spark:  (p) => <svg viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M12 2 13.8 9 21 11l-7.2 2L12 20l-1.8-7L3 11l7.2-2L12 2z"/></svg>,
+  MP:     (p) => <svg viewBox="0 0 48 48" fill="none" {...p}><rect x="4" y="12" width="40" height="24" rx="6" fill="#00B1EA"/><path d="M14 24c4-6 12-6 16 0" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/><circle cx="22" cy="24" r="2.5" fill="#fff"/></svg>,
+  CardL:  (p) => <svg viewBox="0 0 48 48" fill="none" {...p}><rect x="4" y="10" width="40" height="28" rx="5" fill="#0B6FB8"/><rect x="4" y="16" width="40" height="5" fill="#08527d"/><rect x="9" y="27" width="10" height="3" rx="1" fill="#fff" opacity=".9"/><circle cx="36" cy="31" r="3.5" fill="#F26B5C"/><circle cx="40" cy="31" r="3.5" fill="#FFC857" opacity=".8"/></svg>,
+  CardI:  (p) => <svg viewBox="0 0 48 48" fill="none" {...p}><circle cx="24" cy="24" r="18" fill="#1F3A5F"/><ellipse cx="24" cy="24" rx="8" ry="18" stroke="#fff" strokeWidth="1.5" fill="none"/><path d="M6 24h36M9 16h30M9 32h30" stroke="#fff" strokeWidth="1.5"/></svg>,
+  Bank:   (p) => <svg viewBox="0 0 48 48" fill="none" {...p}><path d="M24 6 6 16h36L24 6z" fill="#0B6FB8"/><rect x="9" y="18" width="4" height="16" fill="#0B6FB8"/><rect x="17" y="18" width="4" height="16" fill="#0B6FB8"/><rect x="27" y="18" width="4" height="16" fill="#0B6FB8"/><rect x="35" y="18" width="4" height="16" fill="#0B6FB8"/><rect x="6" y="36" width="36" height="4" rx="1" fill="#0B6FB8"/></svg>,
 };
 
 function Logo({ size = 40 }) {
@@ -231,7 +228,7 @@ function TopBar({ step }) {
     <header className="topbar">
       <div className="topbar-inner">
         <Logo />
-        <a href="https://modulosanitario.org" className="topbar-back">
+        <a href="/inicio" className="topbar-back">
           <Ic.Back width="16" height="16" /> Volver al sitio
         </a>
       </div>
@@ -252,11 +249,11 @@ function TopBar({ step }) {
 
 function ImpactStrip({ amount }) {
   const tiers = [
-    { min:0,     max:1499,    msg:"una familia accede a productos de higiene por un mes" },
-    { min:1500,  max:4999,    msg:"ayudás a financiar materiales para construir un baño digno" },
-    { min:5000,  max:14999,   msg:"cubrís el inodoro y la ducha de un módulo sanitario" },
-    { min:15000, max:49999,   msg:"una familia accede a un baño digno por primera vez" },
-    { min:50000, max:Infinity, msg:"construís un módulo sanitario completo para una familia" },
+    { min:0,      max:1499,     msg:"una familia accede a productos de higiene por un mes" },
+    { min:1500,   max:4999,     msg:"ayudás a financiar materiales para construir un baño digno" },
+    { min:5000,   max:14999,    msg:"cubrís el inodoro y la ducha de un módulo sanitario" },
+    { min:15000,  max:49999,    msg:"una familia accede a un baño digno por primera vez" },
+    { min:50000,  max:Infinity, msg:"construís un módulo sanitario completo para una familia" },
   ];
   const tier = tiers.find(t => amount >= t.min && amount <= t.max) || tiers[0];
   return (
@@ -334,7 +331,6 @@ function Step1({ data, setData, onNext, savedForLater }) {
           <cite>— Carolina, beneficiaria, Quilmes</cite>
         </blockquote>
       </aside>
-
       <main className="form-card">
         <div className="form-head">
           <span className="eyebrow">Doná en 2 pasos</span>
@@ -379,10 +375,10 @@ function Step2({ data, amount, setAmount, frequency, setFrequency, onBack, onSel
   };
 
   const methods = [
-    { id:"mp",    name:"Mercado Pago",            desc:"Tarjeta, dinero en cuenta o efectivo en Pago Fácil/Rapipago.", tags:["Recomendado","Sin comisión extra"], icon:<Ic.MP width="48" height="48"/>,    color:"#00B1EA" },
-    { id:"local", name:"Tarjeta local (Argentina)",desc:"Crédito o débito emitida en Argentina. Hasta 3 cuotas sin interés.", tags:["Crédito y débito"],           icon:<Ic.CardL width="48" height="48"/>, color:"#0B6FB8" },
-    { id:"intl",  name:"Tarjeta internacional",    desc:"Para donantes desde el exterior. Procesado en USD.",           tags:["USD","Visa · Master · Amex"],       icon:<Ic.CardI width="48" height="48"/>, color:"#1F3A5F" },
-    { id:"bank",  name:"Transferencia bancaria",   desc:"Te mostramos los datos de la cuenta para hacer la transferencia.", tags:["CBU/Alias"],                    icon:<Ic.Bank width="48" height="48"/>,  color:"#0B6FB8" },
+    { id:"mp",    name:"Mercado Pago",             desc:"Tarjeta, dinero en cuenta o efectivo en Pago Fácil/Rapipago.", tags:["Recomendado","Sin comisión extra"], icon:<Ic.MP    width="48" height="48"/>, color:"#00B1EA" },
+    { id:"local", name:"Tarjeta local (Argentina)", desc:"Crédito o débito emitida en Argentina. Hasta 3 cuotas sin interés.", tags:["Crédito y débito"],          icon:<Ic.CardL width="48" height="48"/>, color:"#0B6FB8" },
+    { id:"intl",  name:"Tarjeta internacional",     desc:"Para donantes desde el exterior. Procesado en USD.",          tags:["USD","Visa · Master · Amex"],       icon:<Ic.CardI width="48" height="48"/>, color:"#1F3A5F" },
+    { id:"bank",  name:"Transferencia bancaria",    desc:"Te mostramos los datos de la cuenta para hacer la transferencia.", tags:["CBU/Alias"],                    icon:<Ic.Bank  width="48" height="48"/>, color:"#0B6FB8" },
   ];
 
   return (
@@ -393,7 +389,6 @@ function Step2({ data, amount, setAmount, frequency, setFrequency, onBack, onSel
         <h1>Elegí tu monto y cómo donar</h1>
         <p className="lede">¡Gracias <strong>{data.nombre||"donante"}</strong>! Definí cuánto querés aportar y elegí el método de pago.</p>
       </div>
-
       <fieldset className="freq">
         <legend>Frecuencia</legend>
         <div className="freq-row">
@@ -407,7 +402,6 @@ function Step2({ data, amount, setAmount, frequency, setFrequency, onBack, onSel
           ))}
         </div>
       </fieldset>
-
       <fieldset className="amount">
         <legend>Elegí un monto {frequency==="mensual"&&<small>por mes</small>}</legend>
         <div className="amount-grid">
@@ -423,9 +417,7 @@ function Step2({ data, amount, setAmount, frequency, setFrequency, onBack, onSel
         </div>
         {amountError && <p className="err">{amountError}</p>}
       </fieldset>
-
       <ImpactStrip amount={amount||0}/>
-
       <h2 className="methods-title">Método de pago</h2>
       <ul className="methods">
         {methods.map(m => (
@@ -450,39 +442,100 @@ function Step2({ data, amount, setAmount, frequency, setFrequency, onBack, onSel
 }
 
 /* ── STEP 3 ── */
-function Step3({ data, amount, frequency, method, onBack, onRestart }) {
+function Step3({ data, amount, frequency, method, onBack, onRestart, guardarEnFormidable }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const map = {
     mp:    { name:"Mercado Pago",           color:"#00B1EA", icon:<Ic.MP    width="40" height="40"/> },
     local: { name:"Tarjeta local",          color:"#0B6FB8", icon:<Ic.CardL width="40" height="40"/> },
     intl:  { name:"Tarjeta internacional",  color:"#1F3A5F", icon:<Ic.CardI width="40" height="40"/> },
     bank:  { name:"Transferencia bancaria", color:"#0B6FB8", icon:<Ic.Bank  width="40" height="40"/> },
   };
-  const m = map[method]||map.mp;
+  const m = map[method] || map.mp;
+
+  useEffect(() => {
+    if (method === 'bank') { setLoading(false); return; }
+    fetch('/wp-json/donacion/v1/crear-preferencia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        monto:    amount,
+        nombre:   data.nombre,
+        apellido: data.apellido,
+        email:    data.email,
+        dni:      data.dni,
+      })
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res.success && res.init_point) {
+        guardarEnFormidable(data, {
+          monto:         amount,
+          metodo:        method,
+          preference_id: res.id,
+        });
+        window.location.href = res.init_point;
+      } else {
+        setError('No pudimos conectar con Mercado Pago. Intentá de nuevo.');
+        setLoading(false);
+      }
+    })
+    .catch(() => {
+      setError('Error de conexión. Intentá de nuevo.');
+      setLoading(false);
+    });
+  }, []);
+
   return (
     <div className="step3-wrap">
-      <button className="back-link" onClick={onBack} type="button"><Ic.Back width="16" height="16"/> Cambiar método de pago</button>
+      <button className="back-link" onClick={onBack} type="button">
+        <Ic.Back width="16" height="16"/> Cambiar método de pago
+      </button>
       <div className="step3-card">
-        <div className="step3-badge" style={{background:m.color+"18",color:m.color}}>{m.icon}</div>
-        <h2>Te estamos redirigiendo a {m.name}…</h2>
-        <p className="lede">Donación de <strong>\${amount.toLocaleString("es-AR")} ARS{frequency==="mensual"?" /mes":""}</strong> a nombre de <strong>{data.nombre} {data.apellido}</strong>.</p>
-        <div className="step3-loader"><div className="dot"/><div className="dot"/><div className="dot"/></div>
-        {method==="bank" && (
-          <div className="bank-block">
-            <h4>Datos para transferencia</h4>
-            <dl>
-              <div><dt>Titular</dt><dd>Asoc. Civil Módulo Sanitario</dd></div>
-              <div><dt>CUIT</dt><dd>30-71234567-8</dd></div>
-              <div><dt>Banco</dt><dd>Banco Galicia</dd></div>
-              <div><dt>CBU</dt><dd>0070123456789012345678</dd></div>
-              <div><dt>Alias</dt><dd>MODULO.SANITARIO.AR</dd></div>
-            </dl>
-            <p className="bank-note">Enviá el comprobante a <a href="mailto:donaciones@modulosanitario.org">donaciones@modulosanitario.org</a></p>
-          </div>
+        <div className="step3-badge" style={{background:m.color+"18", color:m.color}}>{m.icon}</div>
+
+        {loading && method !== 'bank' && (
+          <>
+            <h2>Preparando tu donación…</h2>
+            <p className="lede">Conectando con {m.name}. Un segundo.</p>
+            <div className="step3-loader">
+              <div className="dot"/><div className="dot"/><div className="dot"/>
+            </div>
+          </>
         )}
-        <div className="step3-actions">
-          <button type="button" className="cta" onClick={onRestart}>Hacer otra donación</button>
-          <a href="https://modulosanitario.org" className="ghost">Volver al sitio</a>
-        </div>
+
+        {error && (
+          <>
+            <h2>Algo salió mal</h2>
+            <p className="lede" style={{color:"var(--accent-dark)"}}>{error}</p>
+            <div className="step3-actions" style={{marginTop:20}}>
+              <button type="button" className="cta" onClick={onBack}>Volver a intentar</button>
+            </div>
+          </>
+        )}
+
+        {method === 'bank' && (
+          <>
+            <h2>Datos para transferencia</h2>
+            <p className="lede">Donación de <strong>\${amount.toLocaleString("es-AR")} ARS</strong> a nombre de <strong>{data.nombre} {data.apellido}</strong>.</p>
+            <div className="bank-block">
+              <h4>Datos de la cuenta</h4>
+              <dl>
+                <div><dt>Titular</dt><dd>Asoc. Civil Módulo Sanitario</dd></div>
+                <div><dt>CUIT</dt><dd>30-71234567-8</dd></div>
+                <div><dt>Banco</dt><dd>Banco Galicia</dd></div>
+                <div><dt>CBU</dt><dd>0070123456789012345678</dd></div>
+                <div><dt>Alias</dt><dd>MODULO.SANITARIO.AR</dd></div>
+              </dl>
+              <p className="bank-note">Enviá el comprobante a <a href="mailto:donaciones@modulosanitario.org">donaciones@modulosanitario.org</a></p>
+            </div>
+            <div className="step3-actions">
+              <button type="button" className="cta" onClick={onRestart}>Hacer otra donación</button>
+              <a href="/inicio" className="ghost">Volver al sitio</a>
+            </div>
+          </>
+        )}
       </div>
       <TrustRow/>
     </div>
@@ -534,25 +587,26 @@ function Footer() {
 
 /* ── APP ── */
 function App() {
-  const [step, setStep] = useState(1);
-  const [data, setData] = useState({ nombre:"", apellido:"", email:"", dni:"", telefono:"" });
-  const [amount, setAmount] = useState(5000);
+  const [step, setStep]           = useState(1);
+  const [data, setData]           = useState({ nombre:"", apellido:"", email:"", dni:"", telefono:"" });
+  const [amount, setAmount]       = useState(5000);
   const [frequency, setFrequency] = useState("unico");
-  const [method, setMethod] = useState(null);
+  const [method, setMethod]       = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [savedForLater, setSavedForLater] = useState(false);
 
   const goStep = (s) => { setStep(s); window.scrollTo({ top:0, behavior:"smooth" }); };
-  const guardarEnFormidable = async (datos) => {
-      try {
-          await fetch('/wp-json/donacion/v1/guardar', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(datos)
-          });
-      } catch(e) {
-          console.log('Formidable save error:', e);
-      }
+
+  const guardarEnFormidable = async (datos, extra = {}) => {
+    try {
+      await fetch('/wp-json/donacion/v1/guardar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...datos, ...extra })
+      });
+    } catch(e) {
+      console.log('Formidable save error:', e);
+    }
   };
 
   return (
@@ -561,7 +615,7 @@ function App() {
       <div className="content">
         {step===1 && <Step1 data={data} setData={setData} onNext={()=>{ guardarEnFormidable(data); setShowModal(true); }} savedForLater={savedForLater}/>}
         {step===2 && <Step2 data={data} amount={amount} setAmount={setAmount} frequency={frequency} setFrequency={setFrequency} onBack={()=>goStep(1)} onSelect={id=>{setMethod(id);goStep(3);}}/>}
-        {step===3 && <Step3 data={data} amount={amount} frequency={frequency} method={method} onBack={()=>goStep(2)} onRestart={()=>{setStep(1);setMethod(null);}}/>}
+        {step===3 && <Step3 data={data} amount={amount} frequency={frequency} method={method} onBack={()=>goStep(2)} onRestart={()=>{setStep(1);setMethod(null);}} guardarEnFormidable={guardarEnFormidable}/>}
       </div>
       <Footer/>
       {showModal && (
