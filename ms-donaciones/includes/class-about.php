@@ -72,7 +72,7 @@ class MS_Donaciones_About {
 
             [
                 'nombre' => 'Martina Ruiz',
-                'mail' => 'martina@uca.edu.ar'
+                'mail' => 'martinaruiz@uca.edu.ar'
             ],
 
             [
