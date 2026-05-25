@@ -54,9 +54,17 @@ class MS_Donaciones_Shortcodes {
             get_option('ms_donaciones_labels', [])
         );
 
+        $frontend_labels = $labels;
+        unset(
+            $frontend_labels['crm_enabled'],
+            $frontend_labels['airtable_base_id'],
+            $frontend_labels['airtable_table_name'],
+            $frontend_labels['airtable_token']
+        );
+
         wp_localize_script('ms-donaciones-form', 'MS_DONACIONES', [
             'restUrl' => esc_url_raw(rest_url('donacion/v1')),
-            'labels'  => $labels,
+            'labels'  => $frontend_labels,
         ]);
     }
 
@@ -67,6 +75,17 @@ class MS_Donaciones_Shortcodes {
             'email' => 'Email',
             'dni' => 'DNI',
             'telefono' => 'Teléfono',
+            'crm_enabled' => '0',
+            'airtable_base_id' => '',
+            'airtable_table_name' => '',
+            'airtable_token' => '',
+            'airtable_field_nombre' => 'Nombre',
+            'airtable_field_apellido' => 'Apellido',
+            'airtable_field_email' => 'Email',
+            'airtable_field_dni' => 'DNI',
+            'airtable_field_telefono' => 'Telefono',
+            'airtable_field_origen' => '',
+            'airtable_field_fecha' => '',
             'foto_url' => 'https://modulosanitario.org/wp-content/uploads/2025/08/banos-portadad-_0003_IMG-20250209-WA0023-1-768x768.jpg',
             'hero_caption' => 'Familia Pereyra · Florencio Varela · 2025',
             'site_back_url' => '/inicio',

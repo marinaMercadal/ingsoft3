@@ -55,7 +55,7 @@ class MS_Donaciones_Admin {
         );
 
         foreach ($input as $key => $value) {
-            if (!array_key_exists($key, $defaults)) {
+            if (!array_key_exists($key, $defaults) && !preg_match('/^impact_tier_\d+$/', $key)) {
                 continue;
             }
 
@@ -77,6 +77,11 @@ class MS_Donaciones_Admin {
                 continue;
             }
 
+            if ($key === 'crm_enabled') {
+                $output[$key] = !empty($value) ? '1' : '0';
+                continue;
+            }
+
             if ($key === 'amount_presets') {
                 $amounts = array_filter(array_map('absint', preg_split('/[\s,;]+/', (string) $value)));
                 $output[$key] = implode(',', $amounts);
@@ -94,13 +99,13 @@ class MS_Donaciones_Admin {
             wp_die('No autorizado.');
         }
 
-        $sections = self::get_sections();
-        $current_slug = self::current_section_slug($sections);
-        $section = $sections[$current_slug];
         $labels = array_merge(
             MS_Donaciones_Shortcodes::default_labels(),
             get_option('ms_donaciones_labels', [])
         );
+        $sections = self::get_sections($labels);
+        $current_slug = self::current_section_slug($sections);
+        $section = $sections[$current_slug];
         $prev_next = self::get_prev_next($sections, $current_slug);
         ?>
         <div class="wrap ms-donaciones-admin">
@@ -149,6 +154,10 @@ class MS_Donaciones_Admin {
                             </tr>
                         <?php endforeach; ?>
                     </table>
+
+                    <?php if (!empty($section['help'])) : ?>
+                        <?php self::render_help_box($section['help']); ?>
+                    <?php endif; ?>
                 </section>
 
                 <div class="ms-save-bar">
@@ -175,7 +184,9 @@ class MS_Donaciones_Admin {
         <?php
     }
 
-    private static function get_sections() {
+    private static function get_sections($labels = null) {
+        $impact_fields = self::get_impact_fields($labels);
+
         return [
             'navegacion' => [
                 'menu' => 'Navegación',
@@ -232,6 +243,38 @@ class MS_Donaciones_Admin {
                     'step1_reassure' => ['Texto de seguridad'],
                 ],
             ],
+            'crm' => [
+                'menu' => 'Datos personales a CRM',
+                'step' => 'Step 1',
+                'title' => 'Datos personales a CRM',
+                'description' => 'Configuración del envío automático de los datos del primer paso.',
+                'fields' => [
+                    'crm_enabled' => ['Activar envío a Airtable', 'checkbox'],
+                    'airtable_base_id' => ['Base ID', 'text', 'Ejemplo: appXXXXXXXXXXXXXX. Lo encontrás en la documentación de API de la base.'],
+                    'airtable_table_name' => ['Tabla', 'text', 'Nombre o ID de la tabla donde se crearán los registros. Ejemplo: Donaciones.'],
+                    'airtable_token' => ['Personal Access Token', 'password', 'Se envía server-side desde WordPress, no queda expuesto en el navegador.'],
+                    'airtable_field_nombre' => ['Columna Nombre', 'text', 'Debe coincidir exactamente con Airtable.'],
+                    'airtable_field_apellido' => ['Columna Apellido', 'text', 'Debe coincidir exactamente con Airtable.'],
+                    'airtable_field_email' => ['Columna Email', 'text', 'Debe coincidir exactamente con Airtable.'],
+                    'airtable_field_dni' => ['Columna DNI', 'text', 'Debe coincidir exactamente con Airtable.'],
+                    'airtable_field_telefono' => ['Columna Telefono', 'text', 'Debe coincidir exactamente con Airtable. Dejalo vacio si no existe.'],
+                    'airtable_field_origen' => ['Columna Origen opcional', 'text', 'Dejalo vacio si no queres enviar este dato.'],
+                    'airtable_field_fecha' => ['Columna Fecha opcional', 'text', 'Dejalo vacio si no queres enviar este dato.'],
+                ],
+                'help' => [
+                    'title' => 'Cómo generar el token de Airtable',
+                    'items' => [
+                        'Entrá al Developer hub de Airtable y creá un Personal Access Token.',
+                        'Agregá el scope data.records:write.',
+                        'En recursos, seleccioná la base donde está la tabla de donantes.',
+                        'Los nombres de columnas deben coincidir exacto con Airtable, incluyendo tildes, espacios y mayusculas.',
+                        'Si una columna opcional no existe en Airtable, dejala vacia para no enviarla.',
+                        'Guardá el token, pegalo acá y completá el Base ID y la tabla.',
+                    ],
+                    'link' => 'https://support.airtable.com/docs/creating-personal-access-tokens',
+                    'link_label' => 'Ver guía oficial de Airtable',
+                ],
+            ],
             'montos' => [
                 'menu' => 'Montos',
                 'step' => 'Step 2',
@@ -258,6 +301,13 @@ class MS_Donaciones_Admin {
                     'methods_title' => ['Titulo metodos'],
                 ],
             ],
+            'impacto' => [
+                'menu' => 'Impacto',
+                'step' => 'Step 2',
+                'title' => 'Impacto por monto',
+                'description' => 'Mensajes dinámicos del bloque "Con $X ARS...".',
+                'fields' => $impact_fields,
+            ],
             'metodos' => [
                 'menu' => 'Métodos de pago',
                 'step' => 'Step 2',
@@ -276,19 +326,6 @@ class MS_Donaciones_Admin {
                     'method_bank_name' => ['Transferencia - nombre'],
                     'method_bank_desc' => ['Transferencia - descripcion'],
                     'method_bank_tags' => ['Transferencia - tags'],
-                ],
-            ],
-            'impacto' => [
-                'menu' => 'Impacto',
-                'step' => 'Step 2',
-                'title' => 'Impacto por monto',
-                'description' => 'Mensajes dinámicos del bloque "Con $X ARS...".',
-                'fields' => [
-                    'impact_tier_1' => ['Hasta 1.499'],
-                    'impact_tier_2' => ['1.500 a 4.999'],
-                    'impact_tier_3' => ['5.000 a 14.999'],
-                    'impact_tier_4' => ['15.000 a 49.999'],
-                    'impact_tier_5' => ['50.000 o mas'],
                 ],
             ],
             'confirmacion' => [
@@ -363,6 +400,36 @@ class MS_Donaciones_Admin {
         ];
     }
 
+    private static function get_impact_fields($labels = null) {
+        $defaults = MS_Donaciones_Shortcodes::default_labels();
+        $labels = is_array($labels) ? array_merge($defaults, $labels) : $defaults;
+        $amounts = self::parse_amount_presets($labels['amount_presets'] ?? $defaults['amount_presets']);
+        $fields = [];
+
+        foreach ($amounts as $index => $amount) {
+            $key = 'impact_tier_' . ($index + 1);
+            $formatted_amount = number_format($amount, 0, ',', '.');
+
+            $fields[$key] = [
+                'Impacto para $' . $formatted_amount,
+                'text',
+                'Se muestra cuando la donación seleccionada es de $' . $formatted_amount . ' ARS o más.',
+            ];
+        }
+
+        return $fields ?: [
+            'impact_tier_1' => ['Impacto por defecto'],
+        ];
+    }
+
+    private static function parse_amount_presets($value) {
+        $amounts = array_filter(array_map('absint', preg_split('/[\s,;]+/', (string) $value)));
+        $amounts = array_values(array_unique($amounts));
+        sort($amounts, SORT_NUMERIC);
+
+        return $amounts;
+    }
+
     private static function current_section_slug($sections) {
         $page = sanitize_key($_GET['page'] ?? 'ms-donaciones');
 
@@ -400,6 +467,28 @@ class MS_Donaciones_Admin {
                 </a>
             <?php endforeach; ?>
         </nav>
+        <?php
+    }
+
+    private static function render_help_box($help) {
+        ?>
+        <aside class="ms-help-box">
+            <h3><?php echo esc_html($help['title'] ?? 'Ayuda'); ?></h3>
+
+            <?php if (!empty($help['items']) && is_array($help['items'])) : ?>
+                <ol>
+                    <?php foreach ($help['items'] as $item) : ?>
+                        <li><?php echo esc_html($item); ?></li>
+                    <?php endforeach; ?>
+                </ol>
+            <?php endif; ?>
+
+            <?php if (!empty($help['link'])) : ?>
+                <a href="<?php echo esc_url($help['link']); ?>" target="_blank" rel="noopener noreferrer">
+                    <?php echo esc_html($help['link_label'] ?? $help['link']); ?>
+                </a>
+            <?php endif; ?>
+        </aside>
         <?php
     }
 
@@ -447,6 +536,22 @@ class MS_Donaciones_Admin {
                 max-width: 720px;
                 width: 100%;
             }
+            .ms-donaciones-admin .ms-help-box {
+                background: #f6f7f7;
+                border-left: 4px solid #2271b1;
+                margin-top: 18px;
+                max-width: 760px;
+                padding: 14px 16px;
+            }
+            .ms-donaciones-admin .ms-help-box h3 {
+                margin: 0 0 8px;
+            }
+            .ms-donaciones-admin .ms-help-box ol {
+                margin: 0 0 10px 20px;
+            }
+            .ms-donaciones-admin .ms-help-box li {
+                margin-bottom: 4px;
+            }
             .ms-donaciones-admin .ms-save-bar {
                 align-items: center;
                 background: #fff;
@@ -471,7 +576,31 @@ class MS_Donaciones_Admin {
     }
 
     private static function render_input($key, $type, $value, $description = '') {
-        $input_type = in_array($type, ['url', 'email', 'number'], true) ? $type : 'text';
+        if ($type === 'checkbox') {
+            ?>
+            <input
+                type="hidden"
+                name="ms_donaciones_labels[<?php echo esc_attr($key); ?>]"
+                value="0"
+            >
+            <label>
+                <input
+                    id="ms-donaciones-<?php echo esc_attr($key); ?>"
+                    type="checkbox"
+                    name="ms_donaciones_labels[<?php echo esc_attr($key); ?>]"
+                    value="1"
+                    <?php checked($value, '1'); ?>
+                >
+                Activado
+            </label>
+            <?php if ($description) : ?>
+                <p class="description"><?php echo esc_html($description); ?></p>
+            <?php endif; ?>
+            <?php
+            return;
+        }
+
+        $input_type = in_array($type, ['url', 'email', 'number', 'password'], true) ? $type : 'text';
         ?>
         <input
             id="ms-donaciones-<?php echo esc_attr($key); ?>"

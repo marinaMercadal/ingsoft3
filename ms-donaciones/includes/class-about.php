@@ -280,7 +280,7 @@ class MS_Donaciones_About {
 
                             <td>
 
-                                0.1.0
+                                <?php echo esc_html(MS_DONACIONES_VERSION); ?>
 
                             </td>
 

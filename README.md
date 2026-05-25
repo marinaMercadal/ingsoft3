@@ -1,8 +1,10 @@
 # MS Donaciones
 
-Plugin WordPress para embeber y administrar el formulario de donaciones de Módulo Sanitario.
+Plugin WordPress para embeber y administrar el formulario de donaciones de Modulo Sanitario.
 
-La implementación actual separa la lógica del theme y concentra el formulario, el shortcode, la configuración del admin y el endpoint REST dentro del plugin.
+Version actual: `0.1.10`
+
+La implementacion actual separa la logica del theme y concentra el formulario, el shortcode, la configuracion del admin, la pagina de equipo y el endpoint REST dentro del plugin.
 
 ## Estructura
 
@@ -19,9 +21,9 @@ ms-donaciones/
     class-about.php
 ```
 
-## Instalación
+## Instalacion
 
-### Opción 1: instalación manual
+### Opcion 1: instalacion manual
 
 Copiar la carpeta completa:
 
@@ -53,7 +55,7 @@ y activar:
 MS Donaciones
 ```
 
-### Opción 2: instalación por ZIP
+### Opcion 2: instalacion por ZIP
 
 Comprimir la carpeta completa `ms-donaciones`, no solo sus archivos internos.
 
@@ -71,7 +73,7 @@ ms-donaciones.zip
 Luego subirlo desde:
 
 ```txt
-Plugins > Añadir nuevo > Subir plugin
+Plugins > Anadir nuevo > Subir plugin
 ```
 
 ## Uso del shortcode
@@ -103,33 +105,35 @@ Contenido:
 [formulario_donacion]
 ```
 
-## Panel de administración
+## Panel de administracion
 
-El plugin agrega una sección al admin de WordPress:
+El plugin agrega una seccion al admin de WordPress:
 
 ```txt
 Donaciones MS
 ```
 
-Desde ahí se pueden configurar textos y valores del formulario por secciones:
+Desde ahi se pueden configurar textos y valores del formulario por secciones:
 
-- Navegación
+- Navegacion
 - Hero lateral
 - Datos personales
+- Datos personales a CRM
 - Montos
-- Métodos de pago
 - Impacto
-- Confirmación
+- Metodos de pago
+- Confirmacion
 - Modal
 - Confianza y footer
+- Equipo
 
-La configuración se guarda en la tabla:
+La configuracion se guarda en la tabla:
 
 ```txt
 wp_options
 ```
 
-con la opción:
+con la opcion:
 
 ```txt
 ms_donaciones_labels
@@ -139,23 +143,80 @@ ms_donaciones_labels
 
 Actualmente se pueden editar desde el admin, entre otros:
 
-- Labels de Nombre, Apellido, Email, DNI y Teléfono.
+- Labels de Nombre, Apellido, Email, DNI y Telefono.
 - URL de imagen principal.
 - Texto sobre la imagen principal.
-- Métricas del hero.
+- Metricas del hero.
 - Cita del hero.
-- Títulos y bajadas del paso 1.
+- Titulos y bajadas del paso 1.
+- Configuracion de envio a Airtable.
 - Montos predefinidos.
 - Monto inicial.
-- Monto mínimo.
+- Monto minimo.
 - Textos de frecuencia.
-- Nombre, descripción y tags de métodos de pago.
 - Mensajes de impacto por monto.
-- Textos de confirmación.
+- Nombre, descripcion y tags de metodos de pago.
+- Textos de confirmacion.
 - Datos de transferencia bancaria.
 - Textos del modal.
 - Sellos de confianza.
 - Links del footer.
+
+## CRM con Airtable
+
+Cuando el usuario completa el primer paso del formulario, el frontend llama al endpoint REST del plugin:
+
+```txt
+POST /wp-json/donacion/v1/guardar
+```
+
+Si el envio a CRM esta activado desde el admin, WordPress reenvia esos datos a Airtable usando la API oficial:
+
+```txt
+https://api.airtable.com/v0/{baseId}/{table}
+```
+
+La configuracion se realiza desde:
+
+```txt
+Donaciones MS > Datos personales a CRM
+```
+
+Campos requeridos:
+
+- Activar envio a Airtable.
+- Base ID, por ejemplo `appXXXXXXXXXXXXXX`.
+- Nombre o ID de tabla, por ejemplo `Donaciones`.
+- Personal Access Token de Airtable.
+- Mapeo de columnas de Airtable para Nombre, Apellido, Email, DNI y Telefono.
+
+El token se usa server-side desde WordPress y no se expone en `window.MS_DONACIONES`.
+
+Los nombres de columnas deben coincidir exactamente con Airtable, incluyendo tildes, espacios y mayusculas. La tabla de Airtable deberia tener al menos las columnas que se configuren en el mapeo, por ejemplo:
+
+```txt
+Nombre
+Apellido
+Email
+DNI
+Telefono
+```
+
+Las columnas `Origen` y `Fecha` son opcionales. Si no existen en Airtable, dejarlas vacias en el admin.
+
+Para generar el Personal Access Token, usar la guia oficial de Airtable:
+
+```txt
+https://support.airtable.com/docs/creating-personal-access-tokens
+```
+
+Scope recomendado para este MVP:
+
+```txt
+data.records:write
+```
+
+Ademas, el token debe tener acceso al recurso/base donde se encuentra la tabla.
 
 ## REST API
 
@@ -174,41 +235,34 @@ Payload esperado:
   "email": "facundoalonso@uca.edu.ar",
   "dni": "12345678",
   "telefono": "1122334455",
-  "monto": 5000,
-  "metodo": "mp"
+  "monto": "",
+  "metodo": "",
+  "crm_event": "step_1_completed"
 }
 ```
 
-Por ahora el endpoint sanitiza la información recibida, la registra en el log de WordPress y devuelve una respuesta mock:
+Respuesta esperada:
 
 ```json
 {
   "success": true,
-  "message": "Datos recibidos correctamente"
+  "message": "Datos recibidos correctamente",
+  "crm_result": {
+    "enabled": true,
+    "success": true,
+    "status": 200,
+    "message": "Datos enviados a Airtable."
+  }
 }
 ```
 
+Si el CRM esta desactivado, el endpoint igualmente responde correctamente y devuelve `crm_result.enabled` en `false`.
+
 ## Mercado Pago
 
-Mercado Pago no está implementado en esta etapa.
+Mercado Pago no esta implementado en esta etapa.
 
-El formulario conserva pantallas y textos relacionados con métodos de pago para mantener el flujo visual, pero la integración real de pago queda pendiente.
-
-## Google Sheets
-
-Google Sheets no está implementado todavía.
-
-El lugar preparado para agregar esa integración más adelante es:
-
-```txt
-includes/class-rest.php
-```
-
-en el método:
-
-```php
-MS_Donaciones_REST::guardar_cliente()
-```
+El formulario conserva pantallas y textos relacionados con metodos de pago para mantener el flujo visual, pero la integracion real de pago queda pendiente.
 
 ## Archivos principales
 
@@ -219,7 +273,7 @@ Archivo principal del plugin. Define constantes, carga clases e inicializa:
 - Shortcodes
 - REST API
 - Admin panel
-- Página de equipo
+- Pagina de equipo
 
 ### `includes/class-shortcodes.php`
 
@@ -229,9 +283,9 @@ Registra:
 [formulario_donacion]
 ```
 
-También carga React, ReactDOM, Babel y `assets/donacion.js`.
+Tambien carga React, ReactDOM, Babel y `assets/donacion.js`.
 
-Además pasa la configuración del admin al frontend mediante:
+Ademas pasa la configuracion publica del admin al frontend mediante:
 
 ```php
 wp_localize_script()
@@ -243,11 +297,13 @@ como variable global:
 window.MS_DONACIONES
 ```
 
+Las credenciales de Airtable no se pasan al frontend.
+
 ### `includes/class-admin.php`
 
-Define el panel de administración `Donaciones MS`.
+Define el panel de administracion `Donaciones MS`.
 
-Permite editar los textos y valores visibles del formulario.
+Permite editar los textos, montos, mensajes de impacto, datos bancarios y configuracion CRM.
 
 ### `includes/class-rest.php`
 
@@ -257,11 +313,19 @@ Define el endpoint REST:
 /wp-json/donacion/v1/guardar
 ```
 
+Sanitiza los datos recibidos y, si esta activado, los envia a Airtable.
+
+### `includes/class-about.php`
+
+Define la subpagina `Equipo` dentro del admin del plugin.
+
+Muestra integrantes, informacion institucional y la version actual del plugin.
+
 ### `assets/donacion.js`
 
 Contiene el formulario React embebido.
 
-Lee la configuración desde:
+Lee la configuracion publica desde:
 
 ```js
 window.MS_DONACIONES.labels
@@ -269,15 +333,13 @@ window.MS_DONACIONES.labels
 
 ## Notas de desarrollo
 
-El formulario actual usa React 18 y Babel desde CDN para facilitar la integración rápida dentro de WordPress.
+El formulario actual usa React 18 y Babel desde CDN para facilitar la integracion rapida dentro de WordPress.
 
-A futuro se recomienda compilar el frontend con un build step y reemplazar Babel en navegador por un bundle estático.
+A futuro se recomienda compilar el frontend con un build step y reemplazar Babel en navegador por un bundle estatico.
 
 ## Pendientes
 
 - Separar CSS a `assets/donacion.css`.
-- Implementar integración real con Mercado Pago.
-- Implementar envío de datos a Google Sheets.
-- Agregar validaciones REST más estrictas.
+- Implementar integracion real con Mercado Pago.
+- Agregar validaciones REST mas estrictas.
 - Agregar tests o validaciones automatizadas.
-

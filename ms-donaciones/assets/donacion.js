@@ -343,14 +343,25 @@ function TopBar({ step }) {
 }
 
 function ImpactStrip({ amount }) {
-  const tiers = [
-    { min:0,      max:1499,     msg:cfg("impact_tier_1", "una familia accede a productos de higiene por un mes") },
-    { min:1500,   max:4999,     msg:cfg("impact_tier_2", "ayudás a financiar materiales para construir un baño digno") },
-    { min:5000,   max:14999,    msg:cfg("impact_tier_3", "cubrís el inodoro y la ducha de un módulo sanitario") },
-    { min:15000,  max:49999,    msg:cfg("impact_tier_4", "una familia accede a un baño digno por primera vez") },
-    { min:50000,  max:Infinity, msg:cfg("impact_tier_5", "construís un módulo sanitario completo para una familia") },
+  const presets = cfgList("amount_presets", ["1500", "5000", "15000", "50000"])
+    .map(n => parseInt(n, 10))
+    .filter(Boolean)
+    .sort((a, b) => a - b);
+  const fallbackMessages = [
+    "una familia accede a productos de higiene por un mes",
+    "ayudás a financiar materiales para construir un baño digno",
+    "cubrís el inodoro y la ducha de un módulo sanitario",
+    "construís un módulo sanitario completo para una familia",
   ];
-  const tier = tiers.find(t => amount >= t.min && amount <= t.max) || tiers[0];
+  const tiers = presets.map((preset, index) => ({
+    amount: preset,
+    msg: cfg("impact_tier_" + (index + 1), fallbackMessages[index] || fallbackMessages[fallbackMessages.length - 1]),
+  }));
+  const tier =
+    [...tiers].reverse().find(t => amount >= t.amount) ||
+    tiers[0] ||
+    { msg: fallbackMessages[0] };
+
   return (
     <div className="impact-strip">
       <div className="impact-icon"><Ic.Spark width="16" height="16" /></div>
@@ -384,6 +395,8 @@ function TrustRow() {
 function Step1({ data, setData, onNext, savedForLater }) {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   const validate = () => {
     const e = {};
@@ -399,12 +412,23 @@ function Step1({ data, setData, onNext, savedForLater }) {
   const ch = (k) => (ev) => setData({ ...data, [k]: ev.target.value });
   const bl = (k) => () => setTouched({ ...touched, [k]: true });
 
-  const submit = (ev) => {
+  const submit = async (ev) => {
     ev.preventDefault();
     const e = validate();
     setErrors(e);
     setTouched({ nombre:true, apellido:true, email:true, dni:true, telefono:true });
-    if (Object.keys(e).length === 0) onNext();
+    if (Object.keys(e).length === 0) {
+      setSubmitting(true);
+      setSubmitError(null);
+
+      try {
+        await onNext();
+      } catch (err) {
+        setSubmitError(err?.message || "No pudimos guardar tus datos. Intentá de nuevo.");
+      } finally {
+        setSubmitting(false);
+      }
+    }
   };
 
   useEffect(() => { if (Object.keys(touched).length) setErrors(validate()); }, [data]);
@@ -440,6 +464,7 @@ function Step1({ data, setData, onNext, savedForLater }) {
           <p>{cfg("step1_impact_text", "Con tu donación, una familia accede a un baño digno por primera vez.")}</p>
         </div>
         <form onSubmit={submit} noValidate>
+          {submitError && <p className="field-error" style={{marginTop:0}}>{submitError}</p>}
           <div className="fields">
             <div className="field-row two">
               <Field label={FIELD_LABELS.nombre} value={data.nombre} onChange={ch("nombre")} onBlur={bl("nombre")} error={showErr("nombre")&&errors.nombre} autoComplete="given-name" required />
@@ -449,7 +474,7 @@ function Step1({ data, setData, onNext, savedForLater }) {
             <Field label={FIELD_LABELS.dni} type="text" inputMode="numeric" value={data.dni} onChange={ch("dni")} onBlur={bl("dni")} error={showErr("dni")&&errors.dni} required hint={cfg("dni_hint", "Requerido por Mercado Pago para identificar el pago.")} />
             <Field label={FIELD_LABELS.telefono} type="tel" value={data.telefono} onChange={ch("telefono")} onBlur={bl("telefono")} error={showErr("telefono")&&errors.telefono} autoComplete="tel" optional hint={cfg("telefono_hint", "Solo si querés que te contactemos.")} />
           </div>
-          <button type="submit" className="cta"><span>{cfg("step1_button", "Continuar")}</span><Ic.Arrow width="20" height="20"/></button>
+          <button type="submit" className="cta" disabled={submitting}><span>{submitting ? "Guardando..." : cfg("step1_button", "Continuar")}</span><Ic.Arrow width="20" height="20"/></button>
           <div className="reassure"><Ic.Lock width="14" height="14"/> {cfg("step1_reassure", "Tus datos están protegidos. No los compartimos con terceros.")}</div>
         </form>
       </main>
@@ -700,7 +725,7 @@ function App() {
       (window.MS_DONACIONES?.restUrl || "/wp-json/donacion/v1")
       + "/guardar";
 
-    await fetch(endpoint, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -711,8 +736,17 @@ function App() {
       })
     });
 
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok || result?.crm_result?.success === false) {
+      console.error('MS Donaciones CRM response:', result);
+    }
+
+    return result;
+
   } catch(e) {
-    console.log('Formidable save error:', e);
+    console.log('MS Donaciones save error:', e);
+    throw e;
     }
   };
 
@@ -720,7 +754,13 @@ function App() {
     <div>
       <TopBar step={step}/>
       <div className="content">
-        {step===1 && <Step1 data={data} setData={setData} onNext={()=>{ guardarEnFormidable(data); setShowModal(true); }} savedForLater={savedForLater}/>}
+        {step===1 && <Step1 data={data} setData={setData} onNext={async()=>{
+          const result = await guardarEnFormidable(data, { crm_event: "step_1_completed" });
+          if (result?.crm_result?.success === false) {
+            throw new Error(result.crm_result.airtable_error || result.crm_result.message || "No pudimos guardar tus datos.");
+          }
+          setShowModal(true);
+        }} savedForLater={savedForLater}/>}
         {step===2 && <Step2 data={data} amount={amount} setAmount={setAmount} frequency={frequency} setFrequency={setFrequency} onBack={()=>goStep(1)} onSelect={id=>{setMethod(id);goStep(3);}}/>}
         {step===3 && <Step3 data={data} amount={amount} frequency={frequency} method={method} onBack={()=>goStep(2)} onRestart={()=>{setStep(1);setMethod(null);}} guardarEnFormidable={guardarEnFormidable}/>}
       </div>
