@@ -1,7 +1,7 @@
 /* =============================================================
    MÓDULO SANITARIO — Formulario de Donación
    Archivo único: React 18 + CSS inlineado + Babel standalone
-   Subir a: wp-content/themes/[tema-activo]/donacion/donacion.js
+   Subir a: wp-content/plugins/ms-donaciones/assets/donacion.js
    ============================================================= */
 
 (function () {
@@ -27,8 +27,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--ink); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
 img { max-width: 100%; display: block; } button { font: inherit; cursor: pointer; } input, select, textarea { font: inherit; } a { color: var(--primary); text-decoration: none; }
-.topbar { background: var(--white); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
-.topbar-inner { max-width: 1180px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+#ms-donacion-root {
+  width: min(1120px, calc(100vw - 32px));
+  max-width: 100%;
+  margin: 0 auto;
+}
+.topbar { width: 100%; margin: 0 auto; background: var(--white); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
+.topbar-inner { width: 100%; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .topbar-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); font-weight: 500; padding: 8px 12px; border-radius: 999px; transition: background .15s; background: transparent; border: 0; text-decoration: none; }
 .topbar-back:hover { background: var(--primary-tint); color: var(--primary); }
 .stepper { max-width: 720px; margin: 0 auto; padding: 10px 20px 18px; display: flex; align-items: center; gap: 8px; }
@@ -40,30 +45,94 @@ img { max-width: 100%; display: block; } button { font: inherit; cursor: pointer
 .step-line { flex: 1; height: 2px; background: var(--line-2); border-radius: 1px; transition: background .25s; min-width: 24px; }
 .step-line.active { background: var(--primary); }
 @media (max-width: 640px) { .step-label { display: none; } .stepper { padding: 8px 20px 14px; gap: 12px; } .step-line { min-width: 40px; } }
-.content { max-width: 1180px; margin: 0 auto; padding: 28px 20px 60px; }
+.content { width: 100%; margin: 0 auto; padding: 28px 20px 60px; }
 .eyebrow { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); background: #fdf0ee; padding: 6px 12px; border-radius: 999px; margin-bottom: 14px; }
 h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; letter-spacing: -.02em; margin: 0 0 12px; font-weight: 800; color: var(--ink); }
 h1 em { font-style: normal; background: linear-gradient(180deg, transparent 60%, #ffd9d4 60%); padding: 0 4px; }
 .lede { font-size: 16px; color: var(--ink-2); margin: 0 0 8px; }
-.step1-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.15fr); gap: 32px; align-items: start; }
-@media (max-width: 900px) { .step1-grid { grid-template-columns: 1fr; gap: 24px; } }
-.hero { position: sticky; top: 120px; display: flex; flex-direction: column; gap: 18px; }
-@media (max-width: 900px) { .hero { position: static; } }
-.hero-photo { position: relative; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); aspect-ratio: 4/5; background: var(--line-2); }
-.hero-photo img { width: 100%; height: 100%; object-fit: cover; }
-.hero-photo-cap { position: absolute; left: 14px; bottom: 14px; background: rgba(15,27,45,.68); backdrop-filter: blur(6px); color: white; font-size: 11px; font-weight: 500; padding: 6px 12px; border-radius: 999px; letter-spacing: .02em; }
-@media (max-width: 900px) { .hero-photo { aspect-ratio: 16/9; } }
-.hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.stat { background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); }
-.stat-num { font-size: 30px; font-weight: 800; color: var(--primary); line-height: 1; letter-spacing: -.03em; margin-bottom: 6px; }
-.stat-label { font-size: 12px; color: var(--ink-2); line-height: 1.35; }
-.hero-quote { margin: 0; background: linear-gradient(140deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 22px 22px 18px; border-radius: var(--radius); position: relative; }
-.hero-quote::before { content: open-quote; position: absolute; top: -8px; left: 18px; font-family: Georgia, serif; font-size: 80px; line-height: 1; color: rgba(255,255,255,.2); }
-.hero-quote p { margin: 0 0 10px; font-size: 15px; line-height: 1.45; font-weight: 500; }
-.hero-quote cite { font-style: normal; font-size: 12px; opacity: .8; font-weight: 600; }
-.form-card { background: white; border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-md); border: 1px solid var(--line); }
-@media (max-width: 600px) { .form-card { padding: 22px 18px; border-radius: var(--radius); } }
-.form-head { margin-bottom: 22px; }
+
+
+.step1-grid{display:grid;grid-template-columns:minmax(320px,.9fr) minmax(360px,1fr);gap:32px;align-items:start;}
+
+.hero{position:sticky;top:120px;display:flex;flex-direction:column;gap:16px;}
+
+.hero-photo{position:relative;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-md);aspect-ratio:4/5;background:var(--line-2);}
+
+.hero-photo img{width:100%;height:100%;object-fit:cover;}
+
+.hero-photo-cap{position:absolute;left:14px;bottom:14px;background:rgba(15,27,45,.72);color:#fff;font-size:11px;padding:8px 14px;border-radius:999px;backdrop-filter:blur(6px);}
+
+.hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.stat{background:#fff;border-radius:18px;padding:18px;border:1px solid var(--line);box-shadow:var(--shadow-sm);}
+
+.stat-num{font-size:34px;font-weight:800;line-height:1;color:var(--primary);margin-bottom:8px;}
+
+.stat-label{font-size:13px;line-height:1.35;color:var(--ink-2);}
+
+.hero-quote{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-radius:18px;padding:22px;}
+
+.hero-quote p{font-size:15px;line-height:1.5;margin:0;}
+
+.hero-quote cite{display:block;margin-top:10px;opacity:.82;font-size:12px;}
+
+.form-card{background:#fff;border-radius:24px;padding:34px;min-width:0;overflow:hidden;box-shadow:var(--shadow-md);border:1px solid var(--line);}
+
+.form-head h1{font-size:clamp(32px,4vw,46px);line-height:1.05;letter-spacing:-.03em;overflow-wrap:break-word;}
+
+.lede{font-size:17px;max-width:520px;}
+
+.topbar{overflow-x:hidden;}
+
+@media(max-width:1040px){
+
+.step1-grid{grid-template-columns:1fr;}
+
+.hero{position:static;}
+
+}
+
+@media(max-width:900px){
+
+.step1-grid{display:flex;flex-direction:column;}
+
+.form-card{order:1;}
+
+.hero{order:2;}
+
+.hero-photo{aspect-ratio:16/9;max-height:300px;}
+
+.hero-stats{grid-template-columns:1fr 1fr;}
+
+.form-head h1{font-size:clamp(30px,7vw,42px);}
+
+}
+
+@media(max-width:640px){
+
+.content{padding:20px 14px 44px;}
+
+.form-card{padding:24px 20px;}
+
+.form-head h1{font-size:36px;}
+
+.hero-photo{max-height:260px;}
+
+.stat{padding:16px;}
+
+.stat-num{font-size:28px;}
+
+}
+
+@media(max-width:480px){
+
+.hero-stats{grid-template-columns:1fr;}
+
+.form-head h1{font-size:32px;}
+
+}
+
+
 .impact-strip { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fdf3f2; border: 1px solid #f9d4cf; border-radius: var(--radius); margin-bottom: 22px; }
 .impact-icon { width: 32px; height: 32px; flex-shrink: 0; background: var(--accent); color: white; border-radius: 50%; display: grid; place-items: center; }
 .impact-strip p { margin: 0; font-size: 14px; color: var(--ink); line-height: 1.4; }
@@ -155,8 +224,8 @@ h1 em { font-style: normal; background: linear-gradient(180deg, transparent 60%,
 .bank-note { font-size: 12px; color: var(--ink-2); margin: 12px 0 0; }
 .step3-actions { display: flex; flex-direction: column; gap: 8px; align-items: center; }
 .ghost { font-size: 13px; color: var(--ink-2); font-weight: 600; padding: 8px 12px; background: transparent; border: 0; cursor: pointer; text-decoration: none; }
-.site-footer { background: white; border-top: 1px solid var(--line); margin-top: 40px; }
-.foot-inner { max-width: 1180px; margin: 0 auto; padding: 24px 20px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; }
+.site-footer { width: 100%; margin: 40px auto 0; background: white; border-top: 1px solid var(--line); }
+.foot-inner { width: 100%; margin: 0 auto; padding: 24px 20px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; }
 .foot-left { display: flex; flex-direction: column; gap: 6px; }
 .foot-left p { margin: 0; font-size: 12px; color: var(--ink-3); }
 .foot-seals { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
@@ -190,7 +259,33 @@ _app.setAttribute("data-presets", "react");
 _app.textContent = `
 const { useState, useEffect } = React;
 
-const FOTO_URL = "https://modulosanitario.org/wp-content/uploads/2025/08/banos-portadad-_0003_IMG-20250209-WA0023-1-768x768.jpg";
+const CONFIG = window.MS_DONACIONES?.labels || {};
+const cfg = (key, fallback = "") => CONFIG[key] || fallback;
+const cfgNum = (key, fallback = 0) => {
+  const value = parseInt(CONFIG[key], 10);
+  return Number.isFinite(value) ? value : fallback;
+};
+const cfgList = (key, fallback = []) => {
+  const raw = CONFIG[key];
+  if (!raw) return fallback;
+  return String(raw).split(",").map(item => item.trim()).filter(Boolean);
+};
+
+const FIELD_LABELS = window.MS_DONACIONES?.labels || {
+  nombre: "Nombre",
+  apellido: "Apellido",
+  email: "Email",
+  dni: "DNI",
+  telefono: "Teléfono",
+};
+
+const FOTO_URL =
+  CONFIG.foto_url ||
+  "https://modulosanitario.org/wp-content/uploads/2025/08/banos-portadad-_0003_IMG-20250209-WA0023-1-768x768.jpg";
+
+const HERO_CAPTION =
+  CONFIG.hero_caption ||
+  "Familia Pereyra · Florencio Varela · 2025";
 
 const Ic = {
   Lock:   (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>,
@@ -228,12 +323,12 @@ function TopBar({ step }) {
     <header className="topbar">
       <div className="topbar-inner">
         <Logo />
-        <a href="/inicio" className="topbar-back">
-          <Ic.Back width="16" height="16" /> Volver al sitio
+        <a href={cfg("site_back_url", "/inicio")} className="topbar-back">
+          <Ic.Back width="16" height="16" /> {cfg("site_back_label", "Volver al sitio")}
         </a>
       </div>
       <div className="stepper">
-        {[["Tus datos",1],["Método de pago",2],["Confirmar",3]].map(([lbl,n],i) => (
+        {[[cfg("stepper_1_label", "Tus datos"),1],[cfg("stepper_2_label", "Método de pago"),2],[cfg("stepper_3_label", "Confirmar"),3]].map(([lbl,n],i) => (
           <React.Fragment key={n}>
             {i > 0 && <div className={"step-line "+(step>=n?"active":"")} />}
             <div className={"step "+(step>=n?"active":"")}>
@@ -249,11 +344,11 @@ function TopBar({ step }) {
 
 function ImpactStrip({ amount }) {
   const tiers = [
-    { min:0,      max:1499,     msg:"una familia accede a productos de higiene por un mes" },
-    { min:1500,   max:4999,     msg:"ayudás a financiar materiales para construir un baño digno" },
-    { min:5000,   max:14999,    msg:"cubrís el inodoro y la ducha de un módulo sanitario" },
-    { min:15000,  max:49999,    msg:"una familia accede a un baño digno por primera vez" },
-    { min:50000,  max:Infinity, msg:"construís un módulo sanitario completo para una familia" },
+    { min:0,      max:1499,     msg:cfg("impact_tier_1", "una familia accede a productos de higiene por un mes") },
+    { min:1500,   max:4999,     msg:cfg("impact_tier_2", "ayudás a financiar materiales para construir un baño digno") },
+    { min:5000,   max:14999,    msg:cfg("impact_tier_3", "cubrís el inodoro y la ducha de un módulo sanitario") },
+    { min:15000,  max:49999,    msg:cfg("impact_tier_4", "una familia accede a un baño digno por primera vez") },
+    { min:50000,  max:Infinity, msg:cfg("impact_tier_5", "construís un módulo sanitario completo para una familia") },
   ];
   const tier = tiers.find(t => amount >= t.min && amount <= t.max) || tiers[0];
   return (
@@ -278,9 +373,9 @@ function Field({ label, error, hint, optional, ...props }) {
 function TrustRow() {
   return (
     <div className="trust-row">
-      <div className="trust-item"><Ic.Lock width="16" height="16"/><div><strong>Pago seguro</strong><span>SSL 256-bit</span></div></div>
-      <div className="trust-item"><Ic.Shield width="16" height="16"/><div><strong>Sitio verificado</strong><span>PCI-DSS · MP</span></div></div>
-      <div className="trust-item"><Ic.Check width="16" height="16"/><div><strong>ONG inscripta</strong><span>IGJ · Ley 27.260</span></div></div>
+      <div className="trust-item"><Ic.Lock width="16" height="16"/><div><strong>{cfg("trust_1_title", "Pago seguro")}</strong><span>{cfg("trust_1_text", "SSL 256-bit")}</span></div></div>
+      <div className="trust-item"><Ic.Shield width="16" height="16"/><div><strong>{cfg("trust_2_title", "Sitio verificado")}</strong><span>{cfg("trust_2_text", "PCI-DSS · MP")}</span></div></div>
+      <div className="trust-item"><Ic.Check width="16" height="16"/><div><strong>{cfg("trust_3_title", "ONG inscripta")}</strong><span>{cfg("trust_3_text", "IGJ · Ley 27.260")}</span></div></div>
     </div>
   );
 }
@@ -295,9 +390,9 @@ function Step1({ data, setData, onNext, savedForLater }) {
     if (!data.nombre?.trim())   e.nombre   = "Ingresá tu nombre";
     if (!data.apellido?.trim()) e.apellido  = "Ingresá tu apellido";
     if (!data.email?.trim())    e.email     = "Ingresá tu email";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) e.email = "Email inválido";
+    else if (!/^[^\\s@]+@[^\\s@]+(\\.[^\\s@]+)+$/.test(data.email.trim())) e.email = "Email inválido";
     if (!data.dni?.trim())      e.dni       = "Ingresá tu DNI";
-    if (data.telefono && data.telefono.replace(/\D/g,"").length < 8) e.telefono = "Teléfono inválido";
+    if (data.telefono && data.telefono.replace(/\\D/g,"").length < 8) e.telefono = "Teléfono inválido";
     return e;
   };
 
@@ -319,43 +414,43 @@ function Step1({ data, setData, onNext, savedForLater }) {
     <div className="step1-grid">
       <aside className="hero">
         <div className="hero-photo">
-          <img src={FOTO_URL} alt="Familia con su nuevo baño digno" />
-          <div className="hero-photo-cap">Familia Pereyra · Florencio Varela · 2025</div>
+          <img src={FOTO_URL} alt={cfg("hero_image_alt", "Familia con su nuevo baño digno")} />
+          <div className="hero-photo-cap">{HERO_CAPTION}</div>
         </div>
         <div className="hero-stats">
-          <div className="stat"><div className="stat-num">6M</div><div className="stat-label">de personas en Argentina viven sin baño</div></div>
-          <div className="stat"><div className="stat-num">+1.200</div><div className="stat-label">módulos sanitarios construidos desde 2014</div></div>
+          <div className="stat"><div className="stat-num">{cfg("hero_stat_1_number", "6M")}</div><div className="stat-label">{cfg("hero_stat_1_label", "de personas en Argentina viven sin baño")}</div></div>
+          <div className="stat"><div className="stat-num">{cfg("hero_stat_2_number", "+1.200")}</div><div className="stat-label">{cfg("hero_stat_2_label", "módulos sanitarios construidos desde 2014")}</div></div>
         </div>
         <blockquote className="hero-quote">
-          <p>"Antes mis hijos hacían sus necesidades en una letrina afuera. Ahora tienen un baño que les da dignidad."</p>
-          <cite>— Carolina, beneficiaria, Quilmes</cite>
+          <p>{cfg("hero_quote_text", "\\\"Antes mis hijos hacían sus necesidades en una letrina afuera. Ahora tienen un baño que les da dignidad.\\\"")}</p>
+          <cite>{cfg("hero_quote_author", "— Carolina, beneficiaria, Quilmes")}</cite>
         </blockquote>
       </aside>
       <main className="form-card">
         <div className="form-head">
-          <span className="eyebrow">Doná en 2 pasos</span>
-          <h1>Construyamos juntos un <em>baño digno</em>.</h1>
-          <p className="lede">Cada donación es una familia que deja de defecar al aire libre.</p>
+          <span className="eyebrow">{cfg("step1_eyebrow", "Doná en 2 pasos")}</span>
+          <h1>{cfg("step1_title_before", "Construyamos juntos un")} <em>{cfg("step1_title_highlight", "baño digno")}</em>{cfg("step1_title_after", ".")}</h1>
+          <p className="lede">{cfg("step1_lede", "Cada donación es una familia que deja de defecar al aire libre.")}</p>
         </div>
         {savedForLater && (
-          <div className="saved-banner"><Ic.Check width="16" height="16"/><p>Tus datos están guardados. Cuando quieras, completá tu donación.</p></div>
+          <div className="saved-banner"><Ic.Check width="16" height="16"/><p>{cfg("saved_banner_text", "Tus datos están guardados. Cuando quieras, completá tu donación.")}</p></div>
         )}
         <div className="impact-strip">
           <div className="impact-icon"><Ic.Spark width="16" height="16"/></div>
-          <p>Con tu donación, una familia accede a un <strong>baño digno</strong> por primera vez.</p>
+          <p>{cfg("step1_impact_text", "Con tu donación, una familia accede a un baño digno por primera vez.")}</p>
         </div>
         <form onSubmit={submit} noValidate>
           <div className="fields">
             <div className="field-row two">
-              <Field label="Nombre" value={data.nombre} onChange={ch("nombre")} onBlur={bl("nombre")} error={showErr("nombre")&&errors.nombre} autoComplete="given-name" required />
-              <Field label="Apellido" value={data.apellido} onChange={ch("apellido")} onBlur={bl("apellido")} error={showErr("apellido")&&errors.apellido} autoComplete="family-name" required />
+              <Field label={FIELD_LABELS.nombre} value={data.nombre} onChange={ch("nombre")} onBlur={bl("nombre")} error={showErr("nombre")&&errors.nombre} autoComplete="given-name" required />
+              <Field label={FIELD_LABELS.apellido} value={data.apellido} onChange={ch("apellido")} onBlur={bl("apellido")} error={showErr("apellido")&&errors.apellido} autoComplete="family-name" required />
             </div>
-            <Field label="Email" type="email" value={data.email} onChange={ch("email")} onBlur={bl("email")} error={showErr("email")&&errors.email} autoComplete="email" required hint="Te enviaremos el comprobante." />
-            <Field label="DNI" type="text" inputMode="numeric" value={data.dni} onChange={ch("dni")} onBlur={bl("dni")} error={showErr("dni")&&errors.dni} required hint="Requerido por Mercado Pago para identificar el pago." />
-            <Field label="Teléfono" type="tel" value={data.telefono} onChange={ch("telefono")} onBlur={bl("telefono")} error={showErr("telefono")&&errors.telefono} autoComplete="tel" optional hint="Solo si querés que te contactemos." />
+            <Field label={FIELD_LABELS.email} type="email" value={data.email} onChange={ch("email")} onBlur={bl("email")} error={showErr("email")&&errors.email} autoComplete="email" required hint={cfg("email_hint", "Te enviaremos el comprobante.")} />
+            <Field label={FIELD_LABELS.dni} type="text" inputMode="numeric" value={data.dni} onChange={ch("dni")} onBlur={bl("dni")} error={showErr("dni")&&errors.dni} required hint={cfg("dni_hint", "Requerido por Mercado Pago para identificar el pago.")} />
+            <Field label={FIELD_LABELS.telefono} type="tel" value={data.telefono} onChange={ch("telefono")} onBlur={bl("telefono")} error={showErr("telefono")&&errors.telefono} autoComplete="tel" optional hint={cfg("telefono_hint", "Solo si querés que te contactemos.")} />
           </div>
-          <button type="submit" className="cta"><span>Continuar</span><Ic.Arrow width="20" height="20"/></button>
-          <div className="reassure"><Ic.Lock width="14" height="14"/> Tus datos están protegidos. No los compartimos con terceros.</div>
+          <button type="submit" className="cta"><span>{cfg("step1_button", "Continuar")}</span><Ic.Arrow width="20" height="20"/></button>
+          <div className="reassure"><Ic.Lock width="14" height="14"/> {cfg("step1_reassure", "Tus datos están protegidos. No los compartimos con terceros.")}</div>
         </form>
       </main>
     </div>
@@ -366,33 +461,34 @@ function Step1({ data, setData, onNext, savedForLater }) {
 function Step2({ data, amount, setAmount, frequency, setFrequency, onBack, onSelect }) {
   const [customAmount, setCustomAmount] = useState(false);
   const [amountError, setAmountError] = useState(null);
-  const presets = [1500, 5000, 15000, 50000];
+  const presets = cfgList("amount_presets", ["1500", "5000", "15000", "50000"]).map(n => parseInt(n, 10)).filter(Boolean);
+  const minAmount = cfgNum("min_amount", 100);
 
   const handleSelect = (id) => {
-    if (!amount || amount < 100) { setAmountError("Elegí un monto válido (mínimo \$100)"); return; }
+    if (!amount || amount < minAmount) { setAmountError(cfg("amount_error", "Elegí un monto válido") + " (mínimo $" + minAmount + ")"); return; }
     setAmountError(null);
     onSelect(id);
   };
 
   const methods = [
-    { id:"mp",    name:"Mercado Pago",             desc:"Tarjeta, dinero en cuenta o efectivo en Pago Fácil/Rapipago.", tags:["Recomendado","Sin comisión extra"], icon:<Ic.MP    width="48" height="48"/>, color:"#00B1EA" },
-    { id:"local", name:"Tarjeta local (Argentina)", desc:"Crédito o débito emitida en Argentina. Hasta 3 cuotas sin interés.", tags:["Crédito y débito"],          icon:<Ic.CardL width="48" height="48"/>, color:"#0B6FB8" },
-    { id:"intl",  name:"Tarjeta internacional",     desc:"Para donantes desde el exterior. Procesado en USD.",          tags:["USD","Visa · Master · Amex"],       icon:<Ic.CardI width="48" height="48"/>, color:"#1F3A5F" },
-    { id:"bank",  name:"Transferencia bancaria",    desc:"Te mostramos los datos de la cuenta para hacer la transferencia.", tags:["CBU/Alias"],                    icon:<Ic.Bank  width="48" height="48"/>, color:"#0B6FB8" },
+    { id:"mp",    name:cfg("method_mp_name", "Mercado Pago"), desc:cfg("method_mp_desc", "Tarjeta, dinero en cuenta o efectivo en Pago Fácil/Rapipago."), tags:cfgList("method_mp_tags", ["Recomendado","Sin comisión extra"]), icon:<Ic.MP width="48" height="48"/>, color:"#00B1EA" },
+    { id:"local", name:cfg("method_local_name", "Tarjeta local (Argentina)"), desc:cfg("method_local_desc", "Crédito o débito emitida en Argentina. Hasta 3 cuotas sin interés."), tags:cfgList("method_local_tags", ["Crédito y débito"]), icon:<Ic.CardL width="48" height="48"/>, color:"#0B6FB8" },
+    { id:"intl",  name:cfg("method_intl_name", "Tarjeta internacional"), desc:cfg("method_intl_desc", "Para donantes desde el exterior. Procesado en USD."), tags:cfgList("method_intl_tags", ["USD","Visa · Master · Amex"]), icon:<Ic.CardI width="48" height="48"/>, color:"#1F3A5F" },
+    { id:"bank",  name:cfg("method_bank_name", "Transferencia bancaria"), desc:cfg("method_bank_desc", "Te mostramos los datos de la cuenta para hacer la transferencia."), tags:cfgList("method_bank_tags", ["CBU/Alias"]), icon:<Ic.Bank width="48" height="48"/>, color:"#0B6FB8" },
   ];
 
   return (
     <div className="step2-wrap">
-      <button className="back-link" onClick={onBack} type="button"><Ic.Back width="16" height="16"/> Volver</button>
+      <button className="back-link" onClick={onBack} type="button"><Ic.Back width="16" height="16"/> {cfg("step2_back_label", "Volver")}</button>
       <div className="step2-head">
-        <span className="eyebrow">Paso 2 de 2</span>
-        <h1>Elegí tu monto y cómo donar</h1>
-        <p className="lede">¡Gracias <strong>{data.nombre||"donante"}</strong>! Definí cuánto querés aportar y elegí el método de pago.</p>
+        <span className="eyebrow">{cfg("step2_eyebrow", "Paso 2 de 2")}</span>
+        <h1>{cfg("step2_title", "Elegí tu monto y cómo donar")}</h1>
+        <p className="lede">{cfg("step2_lede_before_name", "¡Gracias")} <strong>{data.nombre||cfg("anonymous_name", "donante")}</strong>{cfg("step2_lede_after_name", "! Definí cuánto querés aportar y elegí el método de pago.")}</p>
       </div>
       <fieldset className="freq">
-        <legend>Frecuencia</legend>
+        <legend>{cfg("frequency_legend", "Frecuencia")}</legend>
         <div className="freq-row">
-          {[{id:"unico",label:"Donación única"},{id:"mensual",label:"Mensual",badge:"+ impacto"}].map(f => (
+          {[{id:"unico",label:cfg("frequency_once_label", "Donación única")},{id:"mensual",label:cfg("frequency_monthly_label", "Mensual"),badge:cfg("frequency_monthly_badge", "+ impacto")}].map(f => (
             <label key={f.id} className={"freq-opt "+(frequency===f.id?"selected":"")}>
               <input type="radio" name="freq" value={f.id} checked={frequency===f.id} onChange={()=>setFrequency(f.id)}/>
               <span className="freq-dot"/>
@@ -403,7 +499,7 @@ function Step2({ data, amount, setAmount, frequency, setFrequency, onBack, onSel
         </div>
       </fieldset>
       <fieldset className="amount">
-        <legend>Elegí un monto {frequency==="mensual"&&<small>por mes</small>}</legend>
+        <legend>{cfg("amount_legend", "Elegí un monto")} {frequency==="mensual"&&<small>{cfg("amount_monthly_suffix", "por mes")}</small>}</legend>
         <div className="amount-grid">
           {presets.map(p => (
             <button key={p} type="button" className={"amount-chip "+(!customAmount&&amount===p?"selected":"")} onClick={()=>{setAmount(p);setCustomAmount(false);setAmountError(null);}}>
@@ -412,13 +508,13 @@ function Step2({ data, amount, setAmount, frequency, setFrequency, onBack, onSel
           ))}
           <div className={"amount-custom "+(customAmount?"selected":"")}>
             <span className="amount-currency">\$</span>
-            <input type="number" inputMode="numeric" placeholder="Otro monto" onFocus={()=>setCustomAmount(true)} onChange={e=>{setAmount(parseInt(e.target.value||"0",10));setAmountError(null);}} aria-label="Otro monto"/>
+            <input type="number" inputMode="numeric" placeholder={cfg("custom_amount_placeholder", "Otro monto")} onFocus={()=>setCustomAmount(true)} onChange={e=>{setAmount(parseInt(e.target.value||"0",10));setAmountError(null);}} aria-label={cfg("custom_amount_placeholder", "Otro monto")}/>
           </div>
         </div>
         {amountError && <p className="err">{amountError}</p>}
       </fieldset>
       <ImpactStrip amount={amount||0}/>
-      <h2 className="methods-title">Método de pago</h2>
+      <h2 className="methods-title">{cfg("methods_title", "Método de pago")}</h2>
       <ul className="methods">
         {methods.map(m => (
           <li key={m.id}>
@@ -447,10 +543,10 @@ function Step3({ data, amount, frequency, method, onBack, onRestart, guardarEnFo
   const [error, setError] = useState(null);
 
   const map = {
-    mp:    { name:"Mercado Pago",           color:"#00B1EA", icon:<Ic.MP    width="40" height="40"/> },
-    local: { name:"Tarjeta local",          color:"#0B6FB8", icon:<Ic.CardL width="40" height="40"/> },
-    intl:  { name:"Tarjeta internacional",  color:"#1F3A5F", icon:<Ic.CardI width="40" height="40"/> },
-    bank:  { name:"Transferencia bancaria", color:"#0B6FB8", icon:<Ic.Bank  width="40" height="40"/> },
+    mp:    { name:cfg("method_mp_name", "Mercado Pago"), color:"#00B1EA", icon:<Ic.MP    width="40" height="40"/> },
+    local: { name:cfg("method_local_name", "Tarjeta local"), color:"#0B6FB8", icon:<Ic.CardL width="40" height="40"/> },
+    intl:  { name:cfg("method_intl_name", "Tarjeta internacional"), color:"#1F3A5F", icon:<Ic.CardI width="40" height="40"/> },
+    bank:  { name:cfg("method_bank_name", "Transferencia bancaria"), color:"#0B6FB8", icon:<Ic.Bank  width="40" height="40"/> },
   };
   const m = map[method] || map.mp;
 
@@ -477,12 +573,12 @@ function Step3({ data, amount, frequency, method, onBack, onRestart, guardarEnFo
         });
         window.location.href = res.init_point;
       } else {
-        setError('No pudimos conectar con Mercado Pago. Intentá de nuevo.');
+        setError(cfg("step3_error_text", "No pudimos conectar con Mercado Pago. Intentá de nuevo."));
         setLoading(false);
       }
     })
     .catch(() => {
-      setError('Error de conexión. Intentá de nuevo.');
+      setError(cfg("step3_connection_error_text", "Error de conexión. Intentá de nuevo."));
       setLoading(false);
     });
   }, []);
@@ -490,15 +586,15 @@ function Step3({ data, amount, frequency, method, onBack, onRestart, guardarEnFo
   return (
     <div className="step3-wrap">
       <button className="back-link" onClick={onBack} type="button">
-        <Ic.Back width="16" height="16"/> Cambiar método de pago
+        <Ic.Back width="16" height="16"/> {cfg("step3_back_label", "Cambiar método de pago")}
       </button>
       <div className="step3-card">
         <div className="step3-badge" style={{background:m.color+"18", color:m.color}}>{m.icon}</div>
 
         {loading && method !== 'bank' && (
           <>
-            <h2>Preparando tu donación…</h2>
-            <p className="lede">Conectando con {m.name}. Un segundo.</p>
+            <h2>{cfg("step3_loading_title", "Preparando tu donación...")}</h2>
+            <p className="lede">{cfg("step3_loading_text_prefix", "Conectando con")} {m.name}. {cfg("step3_loading_text_suffix", "Un segundo.")}</p>
             <div className="step3-loader">
               <div className="dot"/><div className="dot"/><div className="dot"/>
             </div>
@@ -507,32 +603,32 @@ function Step3({ data, amount, frequency, method, onBack, onRestart, guardarEnFo
 
         {error && (
           <>
-            <h2>Algo salió mal</h2>
+            <h2>{cfg("step3_error_title", "Algo salió mal")}</h2>
             <p className="lede" style={{color:"var(--accent-dark)"}}>{error}</p>
             <div className="step3-actions" style={{marginTop:20}}>
-              <button type="button" className="cta" onClick={onBack}>Volver a intentar</button>
+              <button type="button" className="cta" onClick={onBack}>{cfg("step3_retry_label", "Volver a intentar")}</button>
             </div>
           </>
         )}
 
         {method === 'bank' && (
           <>
-            <h2>Datos para transferencia</h2>
-            <p className="lede">Donación de <strong>\${amount.toLocaleString("es-AR")} ARS</strong> a nombre de <strong>{data.nombre} {data.apellido}</strong>.</p>
+            <h2>{cfg("bank_title", "Datos para transferencia")}</h2>
+            <p className="lede">{cfg("bank_lede_prefix", "Donación de")} <strong>\${amount.toLocaleString("es-AR")} {cfg("bank_lede_middle", "ARS a nombre de")}</strong> <strong>{data.nombre} {data.apellido}</strong>.</p>
             <div className="bank-block">
-              <h4>Datos de la cuenta</h4>
+              <h4>{cfg("bank_block_title", "Datos de la cuenta")}</h4>
               <dl>
-                <div><dt>Titular</dt><dd>Asoc. Civil Módulo Sanitario</dd></div>
-                <div><dt>CUIT</dt><dd>30-71234567-8</dd></div>
-                <div><dt>Banco</dt><dd>Banco Galicia</dd></div>
-                <div><dt>CBU</dt><dd>0070123456789012345678</dd></div>
-                <div><dt>Alias</dt><dd>MODULO.SANITARIO.AR</dd></div>
+                <div><dt>Titular</dt><dd>{cfg("bank_holder", "Asoc. Civil Módulo Sanitario")}</dd></div>
+                <div><dt>CUIT</dt><dd>{cfg("bank_cuit", "30-71234567-8")}</dd></div>
+                <div><dt>Banco</dt><dd>{cfg("bank_name", "Banco Galicia")}</dd></div>
+                <div><dt>CBU</dt><dd>{cfg("bank_cbu", "0070123456789012345678")}</dd></div>
+                <div><dt>Alias</dt><dd>{cfg("bank_alias", "MODULO.SANITARIO.AR")}</dd></div>
               </dl>
-              <p className="bank-note">Enviá el comprobante a <a href="mailto:donaciones@modulosanitario.org">donaciones@modulosanitario.org</a></p>
+              <p className="bank-note">{cfg("bank_note", "Enviá el comprobante a")} <a href={"mailto:" + cfg("bank_email", "donaciones@modulosanitario.org")}>{cfg("bank_email", "donaciones@modulosanitario.org")}</a></p>
             </div>
             <div className="step3-actions">
-              <button type="button" className="cta" onClick={onRestart}>Hacer otra donación</button>
-              <a href="/inicio" className="ghost">Volver al sitio</a>
+              <button type="button" className="cta" onClick={onRestart}>{cfg("restart_button", "Hacer otra donación")}</button>
+              <a href={cfg("site_back_url", "/inicio")} className="ghost">{cfg("site_back_label", "Volver al sitio")}</a>
             </div>
           </>
         )}
@@ -555,14 +651,14 @@ function SavedDataModal({ data, onDonateNow, onDonateLater, onClose }) {
       <div className="modal" onClick={e=>e.stopPropagation()}>
         <button type="button" className="modal-close" onClick={onClose}>×</button>
         <div className="modal-icon"><Ic.Check width="28" height="28"/></div>
-        <h2>¡Listo, {data.nombre||"donante"}! Guardamos tus datos.</h2>
-        <p className="modal-lede">Te enviamos un correo a <strong>{data.email}</strong> para que puedas retomar tu donación cuando quieras.</p>
-        <div className="modal-card"><Ic.Heart width="18" height="18" style={{color:"var(--accent)",flexShrink:0}}/><p><strong>¿Querés donar ahora?</strong> Te lleva 1 minuto y tu aporte se convierte hoy mismo en materiales para construir un baño digno.</p></div>
+        <h2>{cfg("modal_title_prefix", "¡Listo,")} {data.nombre||cfg("anonymous_name", "donante")}{cfg("modal_title_suffix", "! Guardamos tus datos.")}</h2>
+        <p className="modal-lede">{cfg("modal_lede_prefix", "Te enviamos un correo a")} <strong>{data.email}</strong> {cfg("modal_lede_suffix", "para que puedas retomar tu donación cuando quieras.")}</p>
+        <div className="modal-card"><Ic.Heart width="18" height="18" style={{color:"var(--accent)",flexShrink:0}}/><p><strong>{cfg("modal_card_title", "¿Querés donar ahora?")}</strong> {cfg("modal_card_text", "Te lleva 1 minuto y tu aporte se convierte hoy mismo en materiales para construir un baño digno.")}</p></div>
         <div className="modal-actions">
-          <button type="button" className="cta" onClick={onDonateNow}><span>Sí, donar ahora</span><Ic.Arrow width="20" height="20"/></button>
-          <button type="button" className="ghost-btn" onClick={onDonateLater}>Donar más tarde</button>
+          <button type="button" className="cta" onClick={onDonateNow}><span>{cfg("modal_donate_now", "Sí, donar ahora")}</span><Ic.Arrow width="20" height="20"/></button>
+          <button type="button" className="ghost-btn" onClick={onDonateLater}>{cfg("modal_donate_later", "Donar más tarde")}</button>
         </div>
-        <p className="modal-foot"><Ic.Lock width="12" height="12"/> Tus datos están protegidos.</p>
+        <p className="modal-foot"><Ic.Lock width="12" height="12"/> {cfg("modal_footer", "Tus datos están protegidos.")}</p>
       </div>
     </div>
   );
@@ -573,13 +669,13 @@ function Footer() {
   return (
     <footer className="site-footer">
       <div className="foot-inner">
-        <div className="foot-left"><Logo size={32}/><p>Asoc. Civil sin fines de lucro · Buenos Aires, Argentina</p></div>
+        <div className="foot-left"><Logo size={32}/><p>{cfg("footer_text", "Asoc. Civil sin fines de lucro · Buenos Aires, Argentina")}</p></div>
         <div className="foot-seals">
-          <span className="seal"><Ic.Lock width="12" height="12"/> SSL Seguro</span>
-          <span className="seal"><Ic.Shield width="12" height="12"/> PCI-DSS</span>
-          <span className="seal"><Ic.Check width="12" height="12"/> ONG Verificada</span>
+          <span className="seal"><Ic.Lock width="12" height="12"/> {cfg("footer_seal_1", "SSL Seguro")}</span>
+          <span className="seal"><Ic.Shield width="12" height="12"/> {cfg("footer_seal_2", "PCI-DSS")}</span>
+          <span className="seal"><Ic.Check width="12" height="12"/> {cfg("footer_seal_3", "ONG Verificada")}</span>
         </div>
-        <div className="foot-links"><a href="#">Términos</a><a href="#">Privacidad</a><a href="#">Contacto</a></div>
+        <div className="foot-links"><a href={cfg("footer_link_1_url", "#")}>{cfg("footer_link_1_label", "Términos")}</a><a href={cfg("footer_link_2_url", "#")}>{cfg("footer_link_2_label", "Privacidad")}</a><a href={cfg("footer_link_3_url", "#")}>{cfg("footer_link_3_label", "Contacto")}</a></div>
       </div>
     </footer>
   );
@@ -589,7 +685,7 @@ function Footer() {
 function App() {
   const [step, setStep]           = useState(1);
   const [data, setData]           = useState({ nombre:"", apellido:"", email:"", dni:"", telefono:"" });
-  const [amount, setAmount]       = useState(5000);
+  const [amount, setAmount]       = useState(cfgNum("default_amount", 5000));
   const [frequency, setFrequency] = useState("unico");
   const [method, setMethod]       = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -598,14 +694,25 @@ function App() {
   const goStep = (s) => { setStep(s); window.scrollTo({ top:0, behavior:"smooth" }); };
 
   const guardarEnFormidable = async (datos, extra = {}) => {
-    try {
-      await fetch('/wp-json/donacion/v1/guardar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...datos, ...extra })
-      });
-    } catch(e) {
-      console.log('Formidable save error:', e);
+  try {
+
+    const endpoint =
+      (window.MS_DONACIONES?.restUrl || "/wp-json/donacion/v1")
+      + "/guardar";
+
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ...datos,
+        ...extra
+      })
+    });
+
+  } catch(e) {
+    console.log('Formidable save error:', e);
     }
   };
 
@@ -629,6 +736,16 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+ReactDOM.createRoot(document.getElementById("ms-donacion-root")).render(<App/>);
 `;
-document.currentScript.after(_app);
+const _currentScript = document.currentScript;
+
+if (window.Babel && typeof window.Babel.transform === "function") {
+  const _compiled = document.createElement("script");
+  _compiled.text = window.Babel.transform(_app.textContent, {
+    presets: ["react"],
+  }).code;
+  _currentScript.after(_compiled);
+} else {
+  _currentScript.after(_app);
+}
