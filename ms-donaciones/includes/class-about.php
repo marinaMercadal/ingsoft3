@@ -213,18 +213,7 @@ class MS_Donaciones_About {
 
                             <td>
 
-                                <a
-                                    href="
-                                    mailto:
-                                    <?php
-
-                                    echo esc_attr(
-                                        $c['mail']
-                                    );
-
-                                    ?>
-                                    "
-                                >
+                                <a href="mailto:<?php echo esc_attr($c['mail']); ?>">
 
                                 <?php
 
@@ -329,13 +318,12 @@ class MS_Donaciones_About {
                             <td>
 
                                 <a
-                                    href="
-                                    https://github.com/Bautista-Poli/ingsoft3
-                                    "
+                                    href="https://github.com/Bautista-Poli/ingsoft3"
                                     target="_blank"
+                                    rel="noopener noreferrer"
                                 >
 
-                                    Github
+                                    GitHub
 
                                 </a>
 

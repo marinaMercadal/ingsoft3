@@ -9,6 +9,8 @@ class MS_Donaciones_Admin {
     public static function init() {
         add_action('admin_menu', [__CLASS__, 'add_menu_page']);
         add_action('admin_init', [__CLASS__, 'register_settings']);
+        add_action('wp_ajax_ms_donaciones_test_airtable', [__CLASS__, 'ajax_test_airtable']);
+        add_action('wp_ajax_ms_donaciones_test_mercadopago', [__CLASS__, 'ajax_test_mercadopago']);
     }
 
     public static function add_menu_page() {
@@ -59,6 +61,11 @@ class MS_Donaciones_Admin {
                 continue;
             }
 
+            if (in_array($key, ['mp_success_url', 'mp_failure_url', 'mp_pending_url'], true)) {
+                $output[$key] = esc_url_raw($value);
+                continue;
+            }
+
             if (str_ends_with($key, '_url') || $key === 'foto_url') {
                 $value = trim((string) $value);
                 $output[$key] = str_starts_with($value, '/') || str_starts_with($value, '#')
@@ -88,6 +95,26 @@ class MS_Donaciones_Admin {
                 continue;
             }
 
+            if (in_array($key, ['airtable_base_id', 'airtable_table_name', 'airtable_token'], true)) {
+                $sanitized = sanitize_text_field($value);
+                if (($output[$key] ?? '') !== $sanitized) {
+                    $output['airtable_connection_status'] = 'unknown';
+                    $output['airtable_connection_message'] = '';
+                }
+                $output[$key] = $sanitized;
+                continue;
+            }
+
+            if ($key === 'mp_access_token') {
+                $sanitized = sanitize_text_field($value);
+                if (($output[$key] ?? '') !== $sanitized) {
+                    $output['mp_connection_status'] = 'unknown';
+                    $output['mp_connection_message'] = '';
+                }
+                $output[$key] = $sanitized;
+                continue;
+            }
+
             $output[$key] = sanitize_text_field($value);
         }
 
@@ -106,6 +133,16 @@ class MS_Donaciones_Admin {
         $sections = self::get_sections($labels);
         $current_slug = self::current_section_slug($sections);
         $section = $sections[$current_slug];
+        $text_sections = self::get_text_sections();
+        $current_text_slug = self::current_text_section_slug($text_sections);
+
+        if ($current_slug === 'textos') {
+            $text_section = $text_sections[$current_text_slug];
+            $section['title'] = 'Textos visibles - ' . $text_section['title'];
+            $section['description'] = $text_section['description'];
+            $section['fields'] = $text_section['fields'];
+        }
+
         $prev_next = self::get_prev_next($sections, $current_slug);
         ?>
         <div class="wrap ms-donaciones-admin">
@@ -135,6 +172,13 @@ class MS_Donaciones_Admin {
                         </button>
                     </div>
 
+                    <?php if ($current_slug === 'textos') : ?>
+                        <?php self::render_text_section_selector($text_sections, $current_text_slug); ?>
+                        <?php if (!empty($text_section['notice'])) : ?>
+                            <p class="ms-field-note"><?php echo wp_kses_post($text_section['notice']); ?></p>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
                     <table class="form-table" role="presentation">
                         <?php foreach ($section['fields'] as $key => $field) : ?>
                             <?php
@@ -158,6 +202,8 @@ class MS_Donaciones_Admin {
                     <?php if (!empty($section['help'])) : ?>
                         <?php self::render_help_box($section['help']); ?>
                     <?php endif; ?>
+
+                    <?php self::render_connection_panel($current_slug, $labels); ?>
                 </section>
 
                 <div class="ms-save-bar">
@@ -188,213 +234,98 @@ class MS_Donaciones_Admin {
         $impact_fields = self::get_impact_fields($labels);
 
         return [
-            'navegacion' => [
-                'menu' => 'Navegación',
-                'step' => 'General',
-                'title' => 'Navegación y pasos',
-                'description' => 'Textos superiores del formulario y labels del stepper.',
-                'fields' => [
-                    'site_back_url' => ['URL volver al sitio', 'text', 'Puede ser relativa, por ejemplo /inicio.'],
-                    'site_back_label' => ['Texto volver al sitio'],
-                    'stepper_1_label' => ['Paso 1'],
-                    'stepper_2_label' => ['Paso 2'],
-                    'stepper_3_label' => ['Paso 3'],
-                ],
+            'textos' => [
+                'menu' => 'Textos visibles',
+                'step' => 'Contenido',
+                'title' => 'Textos visibles',
+                'description' => 'Textos editables del formulario agrupados por seccion.',
+                'fields' => [],
             ],
-            'hero' => [
-                'menu' => 'Hero lateral',
-                'step' => 'Step 1',
-                'title' => 'Hero lateral',
-                'description' => 'Imagen, caption, métricas y cita que aparecen a la izquierda.',
+            'media-links' => [
+                'menu' => 'Media y links',
+                'step' => 'General',
+                'title' => 'Media y links',
+                'description' => 'Imagen principal y URLs visibles del formulario.',
                 'fields' => [
                     'foto_url' => ['URL de foto principal', 'url'],
-                    'hero_image_alt' => ['Alt de imagen'],
-                    'hero_caption' => ['Texto sobre la foto principal'],
-                    'hero_stat_1_number' => ['Metrica 1 - numero'],
-                    'hero_stat_1_label' => ['Metrica 1 - texto'],
-                    'hero_stat_2_number' => ['Metrica 2 - numero'],
-                    'hero_stat_2_label' => ['Metrica 2 - texto'],
-                    'hero_quote_text' => ['Cita'],
-                    'hero_quote_author' => ['Autor de la cita'],
-                ],
-            ],
-            'datos' => [
-                'menu' => 'Datos personales',
-                'step' => 'Step 1',
-                'title' => 'Datos personales',
-                'description' => 'Títulos, labels, ayudas y botones del primer paso.',
-                'fields' => [
-                    'step1_eyebrow' => ['Etiqueta superior'],
-                    'step1_title_before' => ['Titulo antes del destacado'],
-                    'step1_title_highlight' => ['Titulo destacado'],
-                    'step1_title_after' => ['Titulo despues del destacado'],
-                    'step1_lede' => ['Bajada'],
-                    'saved_banner_text' => ['Banner datos guardados'],
-                    'step1_impact_text' => ['Mensaje de impacto fijo'],
-                    'nombre' => ['Label Nombre'],
-                    'apellido' => ['Label Apellido'],
-                    'email' => ['Label Email'],
-                    'dni' => ['Label DNI'],
-                    'telefono' => ['Label Telefono'],
-                    'email_hint' => ['Ayuda Email'],
-                    'dni_hint' => ['Ayuda DNI'],
-                    'telefono_hint' => ['Ayuda Telefono'],
-                    'step1_button' => ['Boton continuar'],
-                    'step1_reassure' => ['Texto de seguridad'],
+                    'site_back_url' => ['URL volver al sitio', 'text', 'Puede ser relativa, por ejemplo /inicio.'],
+                    'footer_link_1_url' => ['Footer link 1 - URL', 'text', 'Puede ser relativa o #.'],
+                    'footer_link_2_url' => ['Footer link 2 - URL', 'text', 'Puede ser relativa o #.'],
+                    'footer_link_3_url' => ['Footer link 3 - URL', 'text', 'Puede ser relativa o #.'],
                 ],
             ],
             'crm' => [
                 'menu' => 'Datos personales a CRM',
-                'step' => 'Step 1',
+                'step' => 'Paso 1',
                 'title' => 'Datos personales a CRM',
-                'description' => 'Configuración del envío automático de los datos del primer paso.',
+                'description' => 'Configuracion del envio automatico de los datos del primer paso.',
                 'fields' => [
-                    'crm_enabled' => ['Activar envío a Airtable', 'checkbox'],
-                    'airtable_base_id' => ['Base ID', 'text', 'Ejemplo: appXXXXXXXXXXXXXX. Lo encontrás en la documentación de API de la base.'],
-                    'airtable_table_name' => ['Tabla', 'text', 'Nombre o ID de la tabla donde se crearán los registros. Ejemplo: Donaciones.'],
-                    'airtable_token' => ['Personal Access Token', 'password', 'Se envía server-side desde WordPress, no queda expuesto en el navegador.'],
+                    'crm_enabled' => ['Activar envio a Airtable', 'checkbox'],
+                    'airtable_base_id' => ['Base ID', 'text', 'Ejemplo: appXXXXXXXXXXXXXX. Lo encontrás en el link de Airtable.'],
+                    'airtable_table_name' => ['Tabla', 'text', 'Nombre o ID de la tabla donde se crearan los registros. Ejemplo: tblwnQntT8oGh70PZ o "leads".'],
+                    'airtable_token' => ['Personal Access Token', 'password', 'Se envia server-side desde WordPress, no queda expuesto en el navegador.'],
                     'airtable_field_nombre' => ['Columna Nombre', 'text', 'Debe coincidir exactamente con Airtable.'],
                     'airtable_field_apellido' => ['Columna Apellido', 'text', 'Debe coincidir exactamente con Airtable.'],
                     'airtable_field_email' => ['Columna Email', 'text', 'Debe coincidir exactamente con Airtable.'],
                     'airtable_field_dni' => ['Columna DNI', 'text', 'Debe coincidir exactamente con Airtable.'],
                     'airtable_field_telefono' => ['Columna Telefono', 'text', 'Debe coincidir exactamente con Airtable. Dejalo vacio si no existe.'],
-                    'airtable_field_origen' => ['Columna Origen opcional', 'text', 'Dejalo vacio si no queres enviar este dato.'],
-                    'airtable_field_fecha' => ['Columna Fecha opcional', 'text', 'Dejalo vacio si no queres enviar este dato.'],
                 ],
                 'help' => [
                     'title' => 'Cómo generar el token de Airtable',
                     'items' => [
-                        'Entrá al Developer hub de Airtable y creá un Personal Access Token.',
-                        'Agregá el scope data.records:write.',
+                        'En Airtable, creá un Personal Access Token.',
+                        'Agregá los scopes data.records:write y data.records:read.',
                         'En recursos, seleccioná la base donde está la tabla de donantes.',
-                        'Los nombres de columnas deben coincidir exacto con Airtable, incluyendo tildes, espacios y mayusculas.',
-                        'Si una columna opcional no existe en Airtable, dejala vacia para no enviarla.',
-                        'Guardá el token, pegalo acá y completá el Base ID y la tabla.',
+                        'Los nombres de columnas deben coincidir EXACTO con Airtable. 🚨',
                     ],
                     'link' => 'https://support.airtable.com/docs/creating-personal-access-tokens',
-                    'link_label' => 'Ver guía oficial de Airtable',
+                    'link_label' => 'Ver guia oficial de Airtable',
                 ],
             ],
             'montos' => [
                 'menu' => 'Montos',
-                'step' => 'Step 2',
-                'title' => 'Montos y frecuencia',
-                'description' => 'Montos predefinidos, monto mínimo y textos de frecuencia.',
+                'step' => 'Paso 2',
+                'title' => 'Montos',
+                'description' => 'Montos predefinidos y limites numericos.',
                 'fields' => [
                     'amount_presets' => ['Montos predefinidos', 'text', 'Separar por coma. Ej: 1500,5000,15000,50000'],
                     'default_amount' => ['Monto inicial', 'number'],
                     'min_amount' => ['Monto minimo', 'number'],
-                    'step2_back_label' => ['Boton volver'],
-                    'step2_eyebrow' => ['Etiqueta superior'],
-                    'step2_title' => ['Titulo'],
-                    'step2_lede_before_name' => ['Bajada antes del nombre'],
-                    'step2_lede_after_name' => ['Bajada despues del nombre'],
-                    'anonymous_name' => ['Nombre fallback'],
-                    'frequency_legend' => ['Titulo frecuencia'],
-                    'frequency_once_label' => ['Frecuencia unica'],
-                    'frequency_monthly_label' => ['Frecuencia mensual'],
-                    'frequency_monthly_badge' => ['Badge mensual'],
-                    'amount_legend' => ['Titulo montos'],
-                    'amount_monthly_suffix' => ['Sufijo mensual'],
-                    'custom_amount_placeholder' => ['Placeholder otro monto'],
-                    'amount_error' => ['Error monto invalido'],
-                    'methods_title' => ['Titulo metodos'],
                 ],
             ],
             'impacto' => [
                 'menu' => 'Impacto',
-                'step' => 'Step 2',
+                'step' => 'Paso 2',
                 'title' => 'Impacto por monto',
-                'description' => 'Mensajes dinámicos del bloque "Con $X ARS...".',
+                'description' => 'Mensajes dinamicos del bloque "Con $X ARS...".',
                 'fields' => $impact_fields,
             ],
-            'metodos' => [
-                'menu' => 'Métodos de pago',
-                'step' => 'Step 2',
-                'title' => 'Métodos de pago',
-                'description' => 'Nombre, descripción y tags de cada método. Tags separados por coma.',
+            'mercadopago' => [
+                'menu' => 'Mercado Pago',
+                'step' => 'Paso 3',
+                'title' => 'Mercado Pago',
+                'description' => 'Configuracion server-side para crear preferencias de Checkout Pro.',
                 'fields' => [
-                    'method_mp_name' => ['Mercado Pago - nombre'],
-                    'method_mp_desc' => ['Mercado Pago - descripcion'],
-                    'method_mp_tags' => ['Mercado Pago - tags'],
-                    'method_local_name' => ['Tarjeta local - nombre'],
-                    'method_local_desc' => ['Tarjeta local - descripcion'],
-                    'method_local_tags' => ['Tarjeta local - tags'],
-                    'method_intl_name' => ['Tarjeta internacional - nombre'],
-                    'method_intl_desc' => ['Tarjeta internacional - descripcion'],
-                    'method_intl_tags' => ['Tarjeta internacional - tags'],
-                    'method_bank_name' => ['Transferencia - nombre'],
-                    'method_bank_desc' => ['Transferencia - descripcion'],
-                    'method_bank_tags' => ['Transferencia - tags'],
+                    'mp_access_token' => ['Access Token', 'password', 'Puede ser TEST-... para pruebas o APP_USR-... para produccion. No se expone en el navegador.'],
+                    'mp_item_title' => ['Título del item'],
+                    'mp_statement_descriptor' => ['Descriptor en resumen'],
+                    'mp_success_url' => ['URL exito', 'url'],
+                    'mp_failure_url' => ['URL fallo', 'url'],
+                    'mp_pending_url' => ['URL pendiente', 'url'],
                 ],
             ],
-            'confirmacion' => [
-                'menu' => 'Confirmación',
-                'step' => 'Step 3',
-                'title' => 'Confirmación y transferencia',
-                'description' => 'Pantalla final, errores y datos bancarios.',
+            'transferencia' => [
+                'menu' => 'Transferencia',
+                'step' => 'Paso 3',
+                'title' => 'Datos de transferencia',
+                'description' => 'Datos bancarios y correo para comprobantes.',
                 'fields' => [
-                    'step3_back_label' => ['Botón cambiar metodo'],
-                    'step3_loading_title' => ['Título cargando'],
-                    'step3_loading_text_prefix' => ['Texto cargando antes del método'],
-                    'step3_loading_text_suffix' => ['Texto cargando después del método'],
-                    'step3_error_title' => ['Título error'],
-                    'step3_error_text' => ['Error Mercado Pago'],
-                    'step3_connection_error_text' => ['Error conexión'],
-                    'step3_retry_label' => ['Botón reintentar'],
-                    'bank_title' => ['Título transferencia'],
-                    'bank_lede_prefix' => ['Texto transferencia antes del monto'],
-                    'bank_lede_middle' => ['Texto entre monto y nombre'],
-                    'bank_block_title' => ['Título bloque bancario'],
                     'bank_holder' => ['Titular'],
                     'bank_cuit' => ['CUIT'],
                     'bank_name' => ['Banco'],
                     'bank_cbu' => ['CBU'],
                     'bank_alias' => ['Alias'],
-                    'bank_note' => ['Texto comprobante'],
                     'bank_email' => ['Email comprobantes', 'email'],
-                    'restart_button' => ['Botón otra donación'],
-                ],
-            ],
-            'modal' => [
-                'menu' => 'Modal',
-                'step' => 'Post datos',
-                'title' => 'Modal post datos',
-                'description' => 'Modal que aparece después de guardar los datos personales.',
-                'fields' => [
-                    'modal_title_prefix' => ['Titulo antes del nombre'],
-                    'modal_title_suffix' => ['Titulo despues del nombre'],
-                    'modal_lede_prefix' => ['Bajada antes del email'],
-                    'modal_lede_suffix' => ['Bajada despues del email'],
-                    'modal_card_title' => ['Titulo tarjeta'],
-                    'modal_card_text' => ['Texto tarjeta'],
-                    'modal_donate_now' => ['Boton donar ahora'],
-                    'modal_donate_later' => ['Boton donar mas tarde'],
-                    'modal_footer' => ['Texto seguridad'],
-                ],
-            ],
-            'footer' => [
-                'menu' => 'Confianza y footer',
-                'step' => 'Cierre',
-                'title' => 'Confianza y footer',
-                'description' => 'Sellos de confianza, footer y links.',
-                'fields' => [
-                    'trust_1_title' => ['Confianza 1 - titulo'],
-                    'trust_1_text' => ['Confianza 1 - texto'],
-                    'trust_2_title' => ['Confianza 2 - titulo'],
-                    'trust_2_text' => ['Confianza 2 - texto'],
-                    'trust_3_title' => ['Confianza 3 - titulo'],
-                    'trust_3_text' => ['Confianza 3 - texto'],
-                    'footer_text' => ['Texto footer'],
-                    'footer_seal_1' => ['Sello 1'],
-                    'footer_seal_2' => ['Sello 2'],
-                    'footer_seal_3' => ['Sello 3'],
-                    'footer_link_1_label' => ['Link 1 - texto'],
-                    'footer_link_1_url' => ['Link 1 - URL', 'text', 'Puede ser relativa o #.'],
-                    'footer_link_2_label' => ['Link 2 - texto'],
-                    'footer_link_2_url' => ['Link 2 - URL', 'text', 'Puede ser relativa o #.'],
-                    'footer_link_3_label' => ['Link 3 - texto'],
-                    'footer_link_3_url' => ['Link 3 - URL', 'text', 'Puede ser relativa o #.'],
                 ],
             ],
         ];
@@ -428,6 +359,158 @@ class MS_Donaciones_Admin {
         sort($amounts, SORT_NUMERIC);
 
         return $amounts;
+    }
+
+    private static function get_text_sections() {
+        return [
+            'navegacion' => [
+                'title' => 'Navegación',
+                'description' => 'Textos superiores y etiquetas del progreso.',
+                'notice' => 'Acá se edita el texto del link. Para cambiar la URL de destino, ir a <strong>Media y links</strong>.',
+                'fields' => [
+                    'site_back_label' => ['Texto volver al sitio'],
+                    'stepper_1_label' => ['Paso 1'],
+                    'stepper_2_label' => ['Paso 2'],
+                    'stepper_3_label' => ['Paso 3'],
+                ],
+            ],
+            'hero' => [
+                'title' => 'Hero lateral',
+                'description' => 'Textos de imagen, métricas y cita lateral.',
+                'fields' => [
+                    'hero_image_alt' => ['Alt de imagen'],
+                    'hero_caption' => ['Texto sobre la foto principal'],
+                    'hero_stat_1_number' => ['Métrica 1 - numero'],
+                    'hero_stat_1_label' => ['Métrica 1 - texto'],
+                    'hero_stat_2_number' => ['Métrica 2 - numero'],
+                    'hero_stat_2_label' => ['Métrica 2 - texto'],
+                    'hero_quote_text' => ['Cita'],
+                    'hero_quote_author' => ['Autor de la cita'],
+                ],
+            ],
+            'datos' => [
+                'title' => 'Datos personales',
+                'description' => 'Títulos, etiquetas, ayudas y botones del primer paso.',
+                'fields' => [
+                    'step1_eyebrow' => ['Etiqueta superior'],
+                    'step1_title_before' => ['Título antes del destacado'],
+                    'step1_title_highlight' => ['Título destacado'],
+                    'step1_title_after' => ['Título después del destacado'],
+                    'step1_lede' => ['Bajada'],
+                    'saved_banner_text' => ['Banner datos guardados'],
+                    'step1_impact_text' => ['Mensaje de impacto fijo'],
+                    'nombre' => ['Label Nombre'],
+                    'apellido' => ['Label Apellido'],
+                    'email' => ['Label Email'],
+                    'dni' => ['Label DNI'],
+                    'telefono' => ['Label Teléfono'],
+                    'email_hint' => ['Ayuda Email'],
+                    'dni_hint' => ['Ayuda DNI'],
+                    'telefono_hint' => ['Ayuda Teléfono'],
+                    'step1_button' => ['Botón continuar'],
+                    'step1_reassure' => ['Texto de seguridad'],
+                ],
+            ],
+            'montos' => [
+                'title' => 'Monto y frecuencia',
+                'description' => 'Textos visibles del paso de monto y frecuencia.',
+                'fields' => [
+                    'step2_back_label' => ['Botón volver'],
+                    'step2_eyebrow' => ['Etiqueta superior'],
+                    'step2_title' => ['Título'],
+                    'step2_lede_before_name' => ['Bajada antes del nombre'],
+                    'step2_lede_after_name' => ['Bajada después del nombre'],
+                    'anonymous_name' => ['Nombre fallback'],
+                    'frequency_legend' => ['Título frecuencia'],
+                    'frequency_once_label' => ['Frecuencia única'],
+                    'frequency_monthly_label' => ['Frecuencia mensual'],
+                    'frequency_monthly_badge' => ['Badge mensual'],
+                    'amount_legend' => ['Título montos'],
+                    'amount_monthly_suffix' => ['Sufijo mensual'],
+                    'custom_amount_placeholder' => ['Placeholder otro monto'],
+                    'amount_error' => ['Error monto invalido'],
+                    'methods_title' => ['Título métodos'],
+                ],
+            ],
+            'metodos' => [
+                'title' => 'Métodos de pago',
+                'description' => 'Nombres, descripciones y tags visibles de los métodos.',
+                'fields' => [
+                    'method_mp_name' => ['Mercado Pago - nombre'],
+                    'method_mp_desc' => ['Mercado Pago - descripción'],
+                    'method_mp_tags' => ['Mercado Pago - tags'],
+                    'method_local_name' => ['Tarjeta local - nombre'],
+                    'method_local_desc' => ['Tarjeta local - descripción'],
+                    'method_local_tags' => ['Tarjeta local - tags'],
+                    'method_intl_name' => ['Tarjeta internacional - nombre'],
+                    'method_intl_desc' => ['Tarjeta internacional - descripción'],
+                    'method_intl_tags' => ['Tarjeta internacional - tags'],
+                    'method_bank_name' => ['Transferencia - nombre'],
+                    'method_bank_desc' => ['Transferencia - descripción'],
+                    'method_bank_tags' => ['Transferencia - tags'],
+                ],
+            ],
+            'confirmacion' => [
+                'title' => 'Confirmación',
+                'description' => 'Textos visibles del paso final y transferencia.',
+                'fields' => [
+                    'step3_back_label' => ['Boton cambiar método'],
+                    'step3_loading_title' => ['Título cargando'],
+                    'step3_loading_text_prefix' => ['Texto cargando antes del método'],
+                    'step3_loading_text_suffix' => ['Texto cargando después del método'],
+                    'step3_error_title' => ['Título error'],
+                    'step3_error_text' => ['Error Mercado Pago'],
+                    'step3_connection_error_text' => ['Error conexion'],
+                    'step3_retry_label' => ['Boton reintentar'],
+                    'bank_title' => ['Título transferencia'],
+                    'bank_lede_prefix' => ['Texto transferencia antes del monto'],
+                    'bank_lede_middle' => ['Texto entre monto y nombre'],
+                    'bank_block_title' => ['Título bloque bancario'],
+                    'bank_note' => ['Texto comprobante'],
+                    'restart_button' => ['Boton otra donacion'],
+                ],
+            ],
+            'modal' => [
+                'title' => 'Modal post datos',
+                'description' => 'Textos del modal que aparece después de guardar los datos personales.',
+                'fields' => [
+                    'modal_title_prefix' => ['Título antes del nombre'],
+                    'modal_title_suffix' => ['Título después del nombre'],
+                    'modal_lede_prefix' => ['Bajada antes del email'],
+                    'modal_lede_suffix' => ['Bajada después del email'],
+                    'modal_card_title' => ['Título tarjeta'],
+                    'modal_card_text' => ['Texto tarjeta'],
+                    'modal_donate_now' => ['Boton donar ahora'],
+                    'modal_donate_later' => ['Boton donar mas tarde'],
+                    'modal_footer' => ['Texto seguridad'],
+                ],
+            ],
+            'footer' => [
+                'title' => 'Confianza y footer',
+                'description' => 'Sellos, textos y labels del footer.',
+                'notice' => 'Acá se editan los textos visibles de los links. Para cambiar las URLs, ir a <strong>Media y links</strong>.',
+                'fields' => [
+                    'trust_1_title' => ['Confianza 1 - título'],
+                    'trust_1_text' => ['Confianza 1 - texto'],
+                    'trust_2_title' => ['Confianza 2 - título'],
+                    'trust_2_text' => ['Confianza 2 - texto'],
+                    'trust_3_title' => ['Confianza 3 - título'],
+                    'trust_3_text' => ['Confianza 3 - texto'],
+                    'footer_text' => ['Texto footer'],
+                    'footer_seal_1' => ['Sello 1'],
+                    'footer_seal_2' => ['Sello 2'],
+                    'footer_seal_3' => ['Sello 3'],
+                    'footer_link_1_label' => ['Link 1 - texto'],
+                    'footer_link_2_label' => ['Link 2 - texto'],
+                    'footer_link_3_label' => ['Link 3 - texto'],
+                ],
+            ],
+        ];
+    }
+
+    private static function current_text_section_slug($text_sections) {
+        $slug = sanitize_key($_GET['text_section'] ?? array_key_first($text_sections));
+        return isset($text_sections[$slug]) ? $slug : array_key_first($text_sections);
     }
 
     private static function current_section_slug($sections) {
@@ -468,6 +551,248 @@ class MS_Donaciones_Admin {
             <?php endforeach; ?>
         </nav>
         <?php
+    }
+
+    private static function render_text_section_selector($text_sections, $current_text_slug) {
+        ?>
+        <div class="ms-inline-selector">
+            <label for="ms-text-section">Sección de textos</label>
+            <select
+                id="ms-text-section"
+                onchange="if (this.value) window.location.href = this.value;"
+            >
+                <?php foreach ($text_sections as $slug => $text_section) : ?>
+                    <option
+                        value="<?php echo esc_url(add_query_arg('text_section', $slug, self::section_url('textos'))); ?>"
+                        <?php selected($slug, $current_text_slug); ?>
+                    >
+                        <?php echo esc_html($text_section['title']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <?php
+    }
+
+    private static function render_connection_panel($current_slug, $labels) {
+        $configs = [
+            'crm' => [
+                'action' => 'ms_donaciones_test_airtable',
+                'label' => 'Probar conexion con Airtable',
+                'status_key' => 'airtable_connection_status',
+                'message_key' => 'airtable_connection_message',
+                'hint' => 'Guarda los cambios antes de probar. La prueba lista 1 registro de la tabla configurada.',
+            ],
+            'mercadopago' => [
+                'action' => 'ms_donaciones_test_mercadopago',
+                'label' => 'Probar conexion con Mercado Pago',
+                'status_key' => 'mp_connection_status',
+                'message_key' => 'mp_connection_message',
+                'hint' => 'Guarda los cambios antes de probar. Si esta prueba falla, Mercado Pago se muestra como no disponible en el formulario.',
+            ],
+        ];
+
+        if (empty($configs[$current_slug])) {
+            return;
+        }
+
+        $config = $configs[$current_slug];
+        $status = sanitize_key($labels[$config['status_key']] ?? 'unknown');
+        $message = sanitize_text_field($labels[$config['message_key']] ?? '');
+        $nonce = wp_create_nonce('ms_donaciones_connection_test');
+        ?>
+        <aside class="ms-connection-box" data-status="<?php echo esc_attr($status); ?>">
+            <div>
+                <h3>Estado de conexión</h3>
+                <p><?php echo esc_html($config['hint']); ?></p>
+                <p class="ms-connection-result">
+                    <?php echo esc_html(self::connection_status_label($status, $message)); ?>
+                </p>
+            </div>
+            <button
+                type="button"
+                class="button button-secondary ms-test-connection"
+                data-action="<?php echo esc_attr($config['action']); ?>"
+                data-nonce="<?php echo esc_attr($nonce); ?>"
+            >
+                <?php echo esc_html($config['label']); ?>
+            </button>
+        </aside>
+        <script>
+            (function(){
+                const box = document.currentScript.previousElementSibling;
+                if (!box) return;
+                const button = box.querySelector(".ms-test-connection");
+                const result = box.querySelector(".ms-connection-result");
+                if (!button || !result) return;
+
+                button.addEventListener("click", async function(){
+                    button.disabled = true;
+                    result.textContent = "Probando conexion...";
+
+                    const formData = new FormData();
+                    formData.append("action", button.dataset.action);
+                    formData.append("_ajax_nonce", button.dataset.nonce);
+
+                    try {
+                        const response = await fetch(ajaxurl, { method: "POST", body: formData });
+                        const payload = await response.json();
+                        const data = payload.data || {};
+                        result.textContent = data.message || (payload.success ? "Conexión válida." : "No se pudo conectar.");
+                        box.dataset.status = payload.success ? "valid" : "invalid";
+                    } catch (error) {
+                        result.textContent = "No se pudo ejecutar la prueba.";
+                        box.dataset.status = "invalid";
+                    } finally {
+                        button.disabled = false;
+                    }
+                });
+            })();
+        </script>
+        <?php
+    }
+
+    private static function connection_status_label($status, $message) {
+        if ($status === 'valid') {
+            return $message ?: 'Conexion valida.';
+        }
+
+        if ($status === 'invalid') {
+            return $message ?: 'Conexion invalida.';
+        }
+
+        return 'Conexion no verificada.';
+    }
+
+    public static function ajax_test_airtable() {
+        self::assert_ajax_permissions();
+
+        $labels = self::labels_with_defaults();
+        $base_id = sanitize_text_field($labels['airtable_base_id'] ?? '');
+        $table_name = sanitize_text_field($labels['airtable_table_name'] ?? '');
+        $token = sanitize_text_field($labels['airtable_token'] ?? '');
+
+        if (!$base_id || !$table_name || !$token) {
+            self::save_connection_status('airtable', 'invalid', 'Falta Base ID, tabla o token.');
+            wp_send_json_error(['message' => 'Falta Base ID, tabla o token.']);
+        }
+
+        $endpoint = sprintf(
+            'https://api.airtable.com/v0/%s/%s?maxRecords=1',
+            rawurlencode($base_id),
+            rawurlencode($table_name)
+        );
+        $response = wp_remote_get($endpoint, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+            ],
+            'timeout' => 12,
+        ]);
+
+        if (is_wp_error($response)) {
+            $message = $response->get_error_message();
+            self::save_connection_status('airtable', 'invalid', $message);
+            wp_send_json_error(['message' => $message]);
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+
+        if ($status_code >= 200 && $status_code < 300) {
+            self::save_connection_status('airtable', 'valid', 'Conexión válida con Airtable.');
+            wp_send_json_success(['message' => 'Conexión válida con Airtable.']);
+        }
+
+        $message = self::extract_api_error($body) ?: 'Airtable respondio con HTTP ' . $status_code . '. Verifica token, scopes data.records:read/write, Base ID y tabla.';
+        self::save_connection_status('airtable', 'invalid', $message);
+        wp_send_json_error(['message' => $message, 'status' => $status_code]);
+    }
+
+    public static function ajax_test_mercadopago() {
+        self::assert_ajax_permissions();
+
+        $labels = self::labels_with_defaults();
+        $token = sanitize_text_field($labels['mp_access_token'] ?? '');
+
+        if (!$token) {
+            self::save_connection_status('mp', 'invalid', 'Falta Access Token.');
+            wp_send_json_error(['message' => 'Falta Access Token.']);
+        }
+
+        $response = wp_remote_get('https://api.mercadopago.com/v1/customers/search?email=test_payer_123@testuser.com', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+            ],
+            'timeout' => 12,
+        ]);
+
+        if (is_wp_error($response)) {
+            $message = $response->get_error_message();
+            self::save_connection_status('mp', 'invalid', $message);
+            wp_send_json_error(['message' => $message]);
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+
+        if ($status_code >= 200 && $status_code < 300) {
+            self::save_connection_status('mp', 'valid', 'Conexión válida con Mercado Pago.');
+            wp_send_json_success(['message' => 'Conexión válida con Mercado Pago.']);
+        }
+
+        $message = self::extract_api_error($body) ?: 'Mercado Pago respondio con HTTP ' . $status_code . '. Verifica el Access Token.';
+        self::save_connection_status('mp', 'invalid', $message);
+        wp_send_json_error(['message' => $message, 'status' => $status_code]);
+    }
+
+    private static function assert_ajax_permissions() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'No autorizado.'], 403);
+        }
+
+        check_ajax_referer('ms_donaciones_connection_test');
+    }
+
+    private static function labels_with_defaults() {
+        return array_merge(
+            MS_Donaciones_Shortcodes::default_labels(),
+            get_option('ms_donaciones_labels', [])
+        );
+    }
+
+    private static function save_connection_status($service, $status, $message) {
+        $labels = self::labels_with_defaults();
+        $prefix = $service === 'mp' ? 'mp' : 'airtable';
+        $labels[$prefix . '_connection_status'] = $status;
+        $labels[$prefix . '_connection_message'] = sanitize_text_field($message);
+
+        update_option('ms_donaciones_labels', $labels);
+    }
+
+    private static function extract_api_error($body) {
+        $decoded = json_decode($body, true);
+
+        if (!is_array($decoded)) {
+            return $body ? substr($body, 0, 300) : '';
+        }
+
+        if (!empty($decoded['error']['message'])) {
+            return $decoded['error']['message'];
+        }
+
+        if (!empty($decoded['error']['type'])) {
+            return $decoded['error']['type'];
+        }
+
+        if (!empty($decoded['message'])) {
+            return $decoded['message'];
+        }
+
+        if (!empty($decoded['error'])) {
+            return is_string($decoded['error']) ? $decoded['error'] : wp_json_encode($decoded['error']);
+        }
+
+        return substr($body, 0, 300);
     }
 
     private static function render_help_box($help) {
@@ -535,6 +860,57 @@ class MS_Donaciones_Admin {
             .ms-donaciones-admin input.regular-text {
                 max-width: 720px;
                 width: 100%;
+            }
+            .ms-donaciones-admin .ms-inline-selector {
+                align-items: center;
+                background: #f6f7f7;
+                border: 1px solid #dcdcde;
+                border-radius: 6px;
+                display: flex;
+                gap: 12px;
+                margin: 16px 0 6px;
+                max-width: 520px;
+                padding: 12px;
+            }
+            .ms-donaciones-admin .ms-inline-selector label {
+                font-weight: 700;
+            }
+            .ms-donaciones-admin .ms-inline-selector select {
+                min-width: 260px;
+            }
+            .ms-donaciones-admin .ms-field-note {
+                background: #f0f6fc;
+                border-left: 4px solid #2271b1;
+                color: #1d2327;
+                margin: 12px 0 6px;
+                max-width: 720px;
+                padding: 10px 12px;
+            }
+            .ms-donaciones-admin .ms-connection-box {
+                align-items: center;
+                background: #fff;
+                border: 1px solid #dcdcde;
+                border-radius: 8px;
+                display: flex;
+                gap: 16px;
+                justify-content: space-between;
+                margin-top: 18px;
+                max-width: 760px;
+                padding: 14px 16px;
+            }
+            .ms-donaciones-admin .ms-connection-box h3 {
+                margin: 0 0 4px;
+            }
+            .ms-donaciones-admin .ms-connection-box p {
+                margin: 0 0 6px;
+            }
+            .ms-donaciones-admin .ms-connection-box[data-status="valid"] .ms-connection-result {
+                color: #008a20;
+                font-weight: 700;
+            }
+            .ms-donaciones-admin .ms-connection-box[data-status="invalid"] .ms-connection-result {
+                color: #b32d2e;
+                font-weight: 700;
             }
             .ms-donaciones-admin .ms-help-box {
                 background: #f6f7f7;

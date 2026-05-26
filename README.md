@@ -2,7 +2,7 @@
 
 Plugin WordPress para embeber y administrar el formulario de donaciones de Modulo Sanitario.
 
-Version actual: `0.1.10`
+Version actual: `0.1.16`
 
 La implementacion actual separa la logica del theme y concentra el formulario, el shortcode, la configuracion del admin, la pagina de equipo y el endpoint REST dentro del plugin.
 
@@ -115,16 +115,13 @@ Donaciones MS
 
 Desde ahi se pueden configurar textos y valores del formulario por secciones:
 
-- Navegacion
-- Hero lateral
-- Datos personales
+- Textos visibles, con selector interno por seccion
+- Media y links
 - Datos personales a CRM
 - Montos
 - Impacto
-- Metodos de pago
-- Confirmacion
-- Modal
-- Confianza y footer
+- Mercado Pago
+- Transferencia
 - Equipo
 
 La configuracion se guarda en la tabla:
@@ -190,6 +187,8 @@ Campos requeridos:
 - Personal Access Token de Airtable.
 - Mapeo de columnas de Airtable para Nombre, Apellido, Email, DNI y Telefono.
 
+La seccion incluye un boton para probar la conexion guardada con Airtable. Para que esa prueba funcione, el token debe tener permisos `data.records:write` y `data.records:read`.
+
 El token se usa server-side desde WordPress y no se expone en `window.MS_DONACIONES`.
 
 Los nombres de columnas deben coincidir exactamente con Airtable, incluyendo tildes, espacios y mayusculas. La tabla de Airtable deberia tener al menos las columnas que se configuren en el mapeo, por ejemplo:
@@ -202,7 +201,6 @@ DNI
 Telefono
 ```
 
-Las columnas `Origen` y `Fecha` son opcionales. Si no existen en Airtable, dejarlas vacias en el admin.
 
 Para generar el Personal Access Token, usar la guia oficial de Airtable:
 
@@ -210,10 +208,11 @@ Para generar el Personal Access Token, usar la guia oficial de Airtable:
 https://support.airtable.com/docs/creating-personal-access-tokens
 ```
 
-Scope recomendado para este MVP:
+Scopes recomendados para este MVP:
 
 ```txt
 data.records:write
+data.records:read
 ```
 
 Ademas, el token debe tener acceso al recurso/base donde se encuentra la tabla.
@@ -260,9 +259,30 @@ Si el CRM esta desactivado, el endpoint igualmente responde correctamente y devu
 
 ## Mercado Pago
 
-Mercado Pago no esta implementado en esta etapa.
+El plugin crea preferencias de Mercado Pago Checkout Pro desde el endpoint:
 
-El formulario conserva pantallas y textos relacionados con metodos de pago para mantener el flujo visual, pero la integracion real de pago queda pendiente.
+```txt
+POST /wp-json/donacion/v1/crear-preferencia
+```
+
+La configuracion se realiza desde:
+
+```txt
+Donaciones MS > Mercado Pago
+```
+
+Campos requeridos:
+
+- Access Token de Mercado Pago (`TEST-...` para pruebas o `APP_USR-...` para produccion).
+- Titulo del item.
+- Descriptor.
+- URLs de exito, fallo y pendiente.
+
+El Access Token se usa server-side desde WordPress y no se expone en `window.MS_DONACIONES`.
+
+El endpoint devuelve `init_point` y el frontend redirige al donante a Mercado Pago.
+
+La seccion incluye un boton para probar la conexion guardada con Mercado Pago. Si la conexion no esta validada, la opcion Mercado Pago aparece deshabilitada en el formulario con el texto "No disponible por el momento".
 
 ## Archivos principales
 
@@ -340,6 +360,5 @@ A futuro se recomienda compilar el frontend con un build step y reemplazar Babel
 ## Pendientes
 
 - Separar CSS a `assets/donacion.css`.
-- Implementar integracion real con Mercado Pago.
 - Agregar validaciones REST mas estrictas.
 - Agregar tests o validaciones automatizadas.

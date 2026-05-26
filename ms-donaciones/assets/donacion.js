@@ -189,6 +189,9 @@ h1 em { font-style: normal; background: linear-gradient(180deg, transparent 60%,
 .methods { list-style: none; padding: 0; margin: 0 0 28px; display: flex; flex-direction: column; gap: 12px; }
 .method-card { width: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; background: white; border: 1.5px solid var(--line); border-radius: var(--radius); padding: 18px; text-align: left; transition: all .18s; box-shadow: var(--shadow-sm); cursor: pointer; }
 .method-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.method-card.disabled, .method-card:disabled { background: #f4f6f8; color: var(--ink-3); cursor: not-allowed; opacity: .68; transform: none; box-shadow: none; }
+.method-card.disabled:hover, .method-card:disabled:hover { border-color: var(--line); transform: none; box-shadow: none; }
+.method-card.disabled .method-icon, .method-card:disabled .method-icon { filter: grayscale(1); opacity: .62; }
 .method-icon { width: 64px; height: 64px; border-radius: 14px; display: grid; place-items: center; flex-shrink: 0; }
 .method-body { min-width: 0; }
 .method-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
@@ -541,21 +544,25 @@ function Step2({ data, amount, setAmount, frequency, setFrequency, onBack, onSel
       <ImpactStrip amount={amount||0}/>
       <h2 className="methods-title">{cfg("methods_title", "Método de pago")}</h2>
       <ul className="methods">
-        {methods.map(m => (
+        {methods.map(m => {
+          const isDisabled = m.id === "mp" && cfg("mp_connection_status", "unknown") !== "valid";
+          const tags = isDisabled ? ["No disponible"] : m.tags;
+          return (
           <li key={m.id}>
-            <button type="button" className="method-card" onClick={()=>handleSelect(m.id)}>
+            <button type="button" className={"method-card " + (isDisabled ? "disabled" : "")} disabled={isDisabled} onClick={()=>!isDisabled && handleSelect(m.id)}>
               <div className="method-icon" style={{background:m.color+"12"}}>{m.icon}</div>
               <div className="method-body">
                 <div className="method-title-row">
                   <h3>{m.name}</h3>
-                  <div className="method-tags">{m.tags.map((t,i)=><span key={i} className={"tag "+(t==="Recomendado"?"tag-rec":"")}>{t}</span>)}</div>
+                  <div className="method-tags">{tags.map((t,i)=><span key={i} className={"tag "+(t==="Recomendado"?"tag-rec":"")}>{t}</span>)}</div>
                 </div>
-                <p>{m.desc}</p>
+                <p>{isDisabled ? "No disponible por el momento" : m.desc}</p>
               </div>
               <div className="method-arrow"><Ic.Arrow width="20" height="20"/></div>
             </button>
           </li>
-        ))}
+          );
+        })}
       </ul>
       <TrustRow/>
     </div>
@@ -577,7 +584,7 @@ function Step3({ data, amount, frequency, method, onBack, onRestart, guardarEnFo
 
   useEffect(() => {
     if (method === 'bank') { setLoading(false); return; }
-    fetch('/wp-json/donacion/v1/crear-preferencia', {
+    fetch((window.MS_DONACIONES?.restUrl || "/wp-json/donacion/v1") + "/crear-preferencia", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -595,9 +602,11 @@ function Step3({ data, amount, frequency, method, onBack, onRestart, guardarEnFo
           monto:         amount,
           metodo:        method,
           preference_id: res.id,
+          external_reference: res.external_reference,
         });
         window.location.href = res.init_point;
       } else {
+        console.error("MS Donaciones MP preference error:", res);
         setError(cfg("step3_error_text", "No pudimos conectar con Mercado Pago. Intentá de nuevo."));
         setLoading(false);
       }
@@ -745,7 +754,7 @@ function App() {
     return result;
 
   } catch(e) {
-    console.log('MS Donaciones save error:', e);
+    console.error('MS Donaciones save error:', e);
     throw e;
     }
   };
