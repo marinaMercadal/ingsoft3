@@ -160,12 +160,68 @@ class MS_Donaciones_REST {
     public static function guardar_cliente($request) {
         $params = $request->get_json_params();
 
+        $nombre   = sanitize_text_field($params['nombre'] ?? '');
+        $apellido = sanitize_text_field($params['apellido'] ?? '');
+        $email    = sanitize_email($params['email'] ?? '');
+        $dni      = sanitize_text_field($params['dni'] ?? '');
+        $telefono = sanitize_text_field($params['telefono'] ?? '');
+
+        // ── Validaciones de campos requeridos ──────────────────────────
+
+        if ( empty( trim( $nombre ) ) ) {
+            return new WP_REST_Response( [ 'success' => false, 'error' => 'El nombre es requerido.' ], 400 );
+        }
+        if ( mb_strlen( trim( $nombre ) ) < 2 ) {
+            return new WP_REST_Response( [ 'success' => false, 'error' => 'El nombre debe tener al menos 2 caracteres.' ], 400 );
+        }
+        if ( ! preg_match( '/^[\pL\s\'\-]+$/u', trim( $nombre ) ) ) {
+            return new WP_REST_Response( [ 'success' => false, 'error' => 'El nombre contiene caracteres no permitidos.' ], 400 );
+        }
+
+        if ( empty( trim( $apellido ) ) ) {
+            return new WP_REST_Response( [ 'success' => false, 'error' => 'El apellido es requerido.' ], 400 );
+        }
+        if ( mb_strlen( trim( $apellido ) ) < 2 ) {
+            return new WP_REST_Response( [ 'success' => false, 'error' => 'El apellido debe tener al menos 2 caracteres.' ], 400 );
+        }
+        if ( ! preg_match( '/^[\pL\s\'\-]+$/u', trim( $apellido ) ) ) {
+            return new WP_REST_Response( [ 'success' => false, 'error' => 'El apellido contiene caracteres no permitidos.' ], 400 );
+        }
+
+        if ( empty( trim( $email ) ) ) {
+            return new WP_REST_Response( [ 'success' => false, 'error' => 'El email es requerido.' ], 400 );
+        }
+        if ( ! is_email( $email ) ) {
+            return new WP_REST_Response( [ 'success' => false, 'error' => 'El email no tiene un formato válido.' ], 400 );
+        }
+
+        if ( empty( trim( $dni ) ) ) {
+            return new WP_REST_Response( [ 'success' => false, 'error' => 'El DNI es requerido.' ], 400 );
+        }
+        if ( ! preg_match( '/^[0-9]+$/', $dni ) ) {
+            return new WP_REST_Response( [ 'success' => false, 'error' => 'El DNI solo puede contener números.' ], 400 );
+        }
+        if ( strlen( $dni ) < 7 || strlen( $dni ) > 8 ) {
+            return new WP_REST_Response( [ 'success' => false, 'error' => 'El DNI debe tener 7 u 8 dígitos.' ], 400 );
+        }
+
+        if ( ! empty( trim( $telefono ) ) ) {
+            if ( ! preg_match( '/^[0-9]+$/', $telefono ) ) {
+                return new WP_REST_Response( [ 'success' => false, 'error' => 'El teléfono solo puede contener números.' ], 400 );
+            }
+            if ( strlen( $telefono ) < 10 ) {
+                return new WP_REST_Response( [ 'success' => false, 'error' => 'El teléfono debe tener al menos 10 dígitos.' ], 400 );
+            }
+        }
+
+        // ── Datos validados, continuar ─────────────────────────────────
+
         $data = [
-            'nombre'   => sanitize_text_field($params['nombre'] ?? ''),
-            'apellido' => sanitize_text_field($params['apellido'] ?? ''),
-            'email'    => sanitize_email($params['email'] ?? ''),
-            'dni'      => sanitize_text_field($params['dni'] ?? ''),
-            'telefono' => sanitize_text_field($params['telefono'] ?? ''),
+            'nombre'   => trim( $nombre ),
+            'apellido' => trim( $apellido ),
+            'email'    => trim( $email ),
+            'dni'      => $dni,
+            'telefono' => $telefono,
             'monto'    => sanitize_text_field($params['monto'] ?? ''),
             'metodo'   => sanitize_text_field($params['metodo'] ?? ''),
         ];
