@@ -403,12 +403,59 @@ function Step1({ data, setData, onNext, savedForLater }) {
 
   const validate = () => {
     const e = {};
-    if (!data.nombre?.trim())   e.nombre   = "Ingresá tu nombre";
-    if (!data.apellido?.trim()) e.apellido  = "Ingresá tu apellido";
-    if (!data.email?.trim())    e.email     = "Ingresá tu email";
-    else if (!/^[^\\s@]+@[^\\s@]+(\\.[^\\s@]+)+$/.test(data.email.trim())) e.email = "Email inválido";
-    if (!data.dni?.trim())      e.dni       = "Ingresá tu DNI";
-    if (data.telefono && data.telefono.replace(/\\D/g,"").length < 8) e.telefono = "Teléfono inválido";
+
+    // Nombre
+    if (!data.nombre?.trim()) {
+      e.nombre = "Ingresá tu nombre";
+    } else if (data.nombre.trim().length < 2) {
+      e.nombre = "El nombre debe tener al menos 2 caracteres";
+    } else if (!/^[a-záéíóúñüA-ZÁÉÍÓÚÑÜ\s'\-]+$/.test(data.nombre.trim())) {
+      e.nombre = "El nombre solo puede contener letras y espacios";
+    }
+
+    // Apellido
+    if (!data.apellido?.trim()) {
+      e.apellido = "Ingresá tu apellido";
+    } else if (data.apellido.trim().length < 2) {
+      e.apellido = "El apellido debe tener al menos 2 caracteres";
+    } else if (!/^[a-záéíóúñüA-ZÁÉÍÓÚÑÜ\s'\-]+$/.test(data.apellido.trim())) {
+      e.apellido = "El apellido solo puede contener letras y espacios";
+    }
+
+    // Email
+    if (!data.email?.trim()) {
+      e.email = "Ingresá tu email";
+    } else {
+      const em = data.email.trim();
+      const atPos = em.indexOf("@");
+      const dotPos = em.lastIndexOf(".");
+      const emailValido = atPos > 0 && dotPos > atPos + 1 && dotPos < em.length - 1;
+      if (!emailValido) {
+        e.email = "El email no tiene un formato válido (ej: nombre@ejemplo.com)";
+      }
+    }
+
+    // DNI
+    if (!data.dni?.trim()) {
+      e.dni = "Ingresá tu DNI";
+    } else {
+      const dniTiene = data.dni.split("").some(function(c){ return c < "0" || c > "9"; });
+      if (dniTiene) {
+        e.dni = "El DNI solo puede contener números";
+      } else if (data.dni.trim().length < 7 || data.dni.trim().length > 8) {
+        e.dni = "El DNI debe tener 7 u 8 dígitos";
+      }
+    }
+    // Teléfono (opcional)
+    if (data.telefono?.trim()) {
+      const telTiene = data.telefono.split("").some(function(c){ return c < "0" || c > "9"; });
+      if (telTiene) {
+        e.telefono = "El teléfono solo puede contener números";
+      } else if (data.telefono.trim().length < 10) {
+        e.telefono = "El teléfono debe tener al menos 10 dígitos";
+      }
+    }
+
     return e;
   };
 
